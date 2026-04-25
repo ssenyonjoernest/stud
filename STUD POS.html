@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>STUD Engineering POS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.48.0/dist/apexcharts.min.js"></script>
+
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Barlow','sans-serif'],
+        condensed: ['Barlow Condensed','sans-serif'],
+        mono: ['JetBrains Mono','monospace'],
+      },
+      colors: {
+        navy: { DEFAULT:'#0f1729', 50:'#e8edf5', 100:'#c5d0e6', 700:'#214286', 800:'#163171', 900:'#0f1729' },
+        orange: { DEFAULT:'#f47b20', 50:'#fff4eb', 400:'#ff8a34', 500:'#f47b20', 600:'#e06510' },
+      },
+    }
+  }
+}
+</script>
+
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{font-family:'Barlow',sans-serif;overflow:hidden;}
+  ::-webkit-scrollbar{width:3px;height:3px;}
+  ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px;}
+  ::-webkit-scrollbar-thumb:hover{background:#f47b20;}
+
+  /* Pages */
+  .page{display:none;}
+  .page.active{display:block;animation:fadeIn .2s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+  /* Nav active */
+  .nav-active{background:rgba(244,123,32,.12);color:#f47b20!important;border-left-color:#f47b20!important;}
+  .nav-active svg{stroke:#f47b20!important;}
+  .mob-nav-active .mob-nav-icon{color:#f47b20!important;}
+  .mob-nav-active .mob-nav-label{color:#f47b20!important;font-weight:700;}
+
+  /* KPI borders */
+  .kpi-o{border-top:3px solid #f47b20;}
+  .kpi-g{border-top:3px solid #22c55e;}
+  .kpi-b{border-top:3px solid #3b82f6;}
+  .kpi-r{border-top:3px solid #ef4444;}
+
+  /* Payment selected */
+  .pay-sel{border-color:#f47b20!important;background:#fff4eb!important;color:#f47b20!important;}
+
+  /* Type badges */
+  .badge-retail{background:#dcfce7;color:#15803d;border:1px solid #86efac;}
+  .badge-wholesale{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;}
+
+  /* Toast */
+  @keyframes tIn{from{transform:translateX(110%);opacity:0}to{transform:none;opacity:1}}
+  @keyframes tOut{to{transform:translateX(110%);opacity:0}}
+  .t-in{animation:tIn .3s cubic-bezier(.21,1.02,.73,1) forwards;}
+  .t-out{animation:tOut .25s ease forwards;}
+
+  /* Modal */
+  @keyframes mIn{from{transform:scale(.95) translateY(8px);opacity:0}to{transform:none;opacity:1}}
+  .m-box{animation:mIn .22s cubic-bezier(.21,1.02,.73,1) forwards;}
+
+  /* Mobile modal slide up */
+  @keyframes mUp{from{transform:translateY(100%)}to{transform:none}}
+  .m-up{animation:mUp .3s cubic-bezier(.21,1.02,.73,1) forwards;}
+
+  /* Sidebar */
+  .sidebar-open{transform:translateX(0)!important;}
+  .overlay-show{opacity:1!important;pointer-events:auto!important;}
+
+  /* Inputs */
+  input:focus,select:focus,textarea:focus{outline:2px solid #f47b20;outline-offset:1px;}
+  input[type=number]{-moz-appearance:textfield;}
+  input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+
+  /* Qty control */
+  .qty-ctrl{display:flex;align-items:center;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;}
+  .qty-ctrl button{background:#f8fafc;border:none;padding:4px 8px;cursor:pointer;color:#64748b;font-size:14px;transition:background .15s;touch-action:manipulation;}
+  .qty-ctrl button:hover,.qty-ctrl button:active{background:#f47b20;color:#fff;}
+  .qty-ctrl input{width:40px;border:none;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 2px;background:#fff;}
+
+  /* Background pattern */
+  .bg-pat{background-color:#f1f5f9;background-image:url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23cbd5e1' fill-opacity='0.25' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");}
+
+  /* Pulse */
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .pulse{animation:pulse 2s infinite;}
+
+  /* Hover card */
+  .hov-card{transition:box-shadow .2s,transform .2s;}
+  .hov-card:hover{box-shadow:0 8px 25px rgba(0,0,0,.12);transform:translateY(-2px);}
+
+  /* Mobile card row for tables */
+  .mob-card-row{border-bottom:1px solid #f1f5f9;}
+  .mob-card-row:last-child{border-bottom:none;}
+
+  /* Safe area for mobile bottom nav */
+  .safe-bottom{padding-bottom:env(safe-area-inset-bottom,0);}
+
+  /* Smooth scroll */
+  .scroll-smooth{scroll-behavior:smooth;}
+
+  /* Touch friendly */
+  button,a,[role=button]{min-height:36px;}
+
+  /* Swipe hint on tables */
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+
+  /* Focus visible */
+  button:focus-visible,a:focus-visible{outline:2px solid #f47b20;outline-offset:2px;}
+</style>
+</head>
+<body class="bg-pat h-screen overflow-hidden">
+<div class="flex h-screen overflow-hidden relative">
+
+<!-- ============================
+     SIDEBAR OVERLAY (mobile)
+============================ -->
+<div id="sideOverlay" onclick="closeSidebar()" class="fixed inset-0 bg-black/50 z-40 opacity-0 pointer-events-none transition-opacity duration-300 lg:hidden"></div>
+
+<!-- ============================
+     SIDEBAR
+============================ -->
+<aside id="sidebar" class="
+  fixed lg:relative inset-y-0 left-0 z-50
+  w-56 flex-shrink-0 flex flex-col
+  bg-navy-900 shadow-xl
+  transform -translate-x-full lg:translate-x-0
+  transition-transform duration-300 ease-in-out
+  overflow-y-auto overflow-x-hidden
+">
+  <!-- Logo -->
+  <div class="px-4 py-4 border-b border-white/10 flex items-center gap-3 flex-shrink-0 bg-gradient-to-br from-navy-800 to-navy-900">
+    <div class="w-9 h-9 bg-orange-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+    <div>
+      <div class="font-condensed text-white text-base font-extrabold tracking-widest leading-none">STUD</div>
+      <div class="text-white/35 text-[9px] tracking-[0.15em] uppercase mt-0.5">Engineering POS</div>
+    </div>
+    <!-- Close btn on mobile -->
+    <button onclick="closeSidebar()" class="ml-auto text-white/40 hover:text-white lg:hidden p-1">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <!-- Nav -->
+  <nav class="flex-1 py-3 px-2 overflow-y-auto">
+    <p class="text-white/25 text-[9px] font-bold uppercase tracking-[.15em] px-3 mb-1.5 mt-1">Main</p>
+    <button onclick="navigate('dashboard');closeSidebar()" class="nav-item w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/60 hover:text-white hover:bg-white/8 border-l-2 border-transparent transition-all text-[13px] font-medium mb-0.5">
+      <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </button>
+    <button onclick="navigate('newsale');closeSidebar()" class="nav-item w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/60 hover:text-white hover:bg-white/8 border-l-2 border-transparent transition-all text-[13px] font-medium mb-0.5">
+      <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      New Sale
+    </button>
+    <button onclick="navigate('sales');closeSidebar()" class="nav-item w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/60 hover:text-white hover:bg-white/8 border-l-2 border-transparent transition-all text-[13px] font-medium mb-0.5">
+      <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Sales
+    </button>
+    <button onclick="navigate('deliveries');closeSidebar()" class="nav-item w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/60 hover:text-white hover:bg-white/8 border-l-2 border-transparent transition-all text-[13px] font-medium mb-0.5">
+      <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      Deliveries
+    </button>
+
+    <p class="text-white/25 text-[9px] font-bold uppercase tracking-[.15em] px-3 mb-1.5 mt-4">Inventory</p>
+    <button onclick="navigate('products');closeSidebar()" class="nav-item w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/60 hover:text-white hover:bg-white/8 border-l-2 border-transparent transition-all text-[13px] font-medium mb-0.5">
+      <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      Products
+    </button>
+    <button onclick="navigate('inventory');closeSidebar()" class="nav-item w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/60 hover:text-white hover:bg-white/8 border-l-2 border-transparent transition-all text-[13px] font-medium mb-0.5">
+      <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Inventory
+    </button>
+
+    <p class="text-white/25 text-[9px] font-bold uppercase tracking-[.15em] px-3 mb-1.5 mt-4">People</p>
+    <button onclick="navigate('customers');closeSidebar()" class="nav-item w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/60 hover:text-white hover:bg-white/8 border-l-2 border-transparent transition-all text-[13px] font-medium mb-0.5">
+      <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Customers
+    </button>
+    <button onclick="navigate('suppliers');closeSidebar()" class="nav-item w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/60 hover:text-white hover:bg-white/8 border-l-2 border-transparent transition-all text-[13px] font-medium mb-0.5">
+      <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Suppliers
+    </button>
+
+    <p class="text-white/25 text-[9px] font-bold uppercase tracking-[.15em] px-3 mb-1.5 mt-4">System</p>
+    <button onclick="navigate('reports');closeSidebar()" class="nav-item w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/60 hover:text-white hover:bg-white/8 border-l-2 border-transparent transition-all text-[13px] font-medium mb-0.5">
+      <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Reports
+    </button>
+    <button onclick="navigate('users');closeSidebar()" class="nav-item w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/60 hover:text-white hover:bg-white/8 border-l-2 border-transparent transition-all text-[13px] font-medium mb-0.5">
+      <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      User Management
+    </button>
+    <button onclick="navigate('settings');closeSidebar()" class="nav-item w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/60 hover:text-white hover:bg-white/8 border-l-2 border-transparent transition-all text-[13px] font-medium mb-0.5">
+      <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </button>
+  </nav>
+
+  <!-- Status -->
+  <div class="px-4 py-3 border-t border-white/10 flex-shrink-0">
+    <div class="flex items-center gap-2 mb-0.5">
+      <span class="w-2 h-2 rounded-full bg-green-400 pulse flex-shrink-0" id="statusDot"></span>
+      <span class="text-white/70 text-xs font-medium" id="statusText">Online</span>
+    </div>
+    <div class="text-white/30 text-[10px]">Last sync: 2 min ago</div>
+  </div>
+</aside>
+
+<!-- ============================
+     MAIN
+============================ -->
+<div class="flex-1 flex flex-col overflow-hidden min-w-0">
+
+  <!-- TOPBAR -->
+  <header class="h-14 bg-white border-b border-slate-200 shadow-sm flex items-center px-3 sm:px-5 gap-2 sm:gap-3 flex-shrink-0 z-30">
+    <!-- Hamburger -->
+    <button onclick="openSidebar()" class="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 flex-shrink-0">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+
+    <!-- Logo mark on mobile -->
+    <div class="w-7 h-7 bg-orange-500 rounded-md flex items-center justify-center flex-shrink-0 lg:hidden">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+
+    <div class="flex-1 min-w-0">
+      <h1 class="font-condensed text-navy-900 font-bold text-lg sm:text-xl tracking-wide truncate" id="pageTitle">New Sale</h1>
+    </div>
+
+    <!-- Date — hidden on xs -->
+    <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border border-slate-200 text-xs text-slate-600 flex-shrink-0">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span id="currentDate" class="hidden md:block"></span>
+    </div>
+
+    <!-- Warehouse — hidden on mobile -->
+    <div class="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border border-slate-200 text-xs text-slate-600 flex-shrink-0">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span class="hidden lg:block">Nakawa Warehouse</span>
+      <span class="lg:hidden">Nakawa</span>
+    </div>
+
+    <!-- Offline toggle -->
+    <button id="offlineBtn" onclick="toggleOffline()" class="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full bg-amber-400 text-white text-[11px] sm:text-xs font-semibold flex-shrink-0">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+      <span id="offLabel" class="hidden sm:inline">Online Mode</span>
+    </button>
+
+    <!-- User -->
+    <button class="flex items-center gap-1.5 pl-1.5 pr-2 sm:pr-3 py-1 rounded-full border border-slate-200 flex-shrink-0">
+      <div class="w-7 h-7 rounded-full bg-navy-900 flex items-center justify-center text-white text-[11px] font-bold">JC</div>
+      <div class="hidden sm:block text-left">
+        <div class="text-[11px] font-semibold text-slate-800 leading-none">John Cashier</div>
+        <div class="text-[9px] text-slate-400 mt-0.5">Cashier</div>
+      </div>
+    </button>
+  </header>
+
+  <!-- CONTENT -->
+  <main class="flex-1 overflow-y-auto overflow-x-hidden" id="mainContent">
+
+    <!-- ======================== DASHBOARD ======================== -->
+    <div class="page active" id="page-dashboard">
+      <div class="p-3 sm:p-4 lg:p-5 space-y-4 pb-20 lg:pb-5">
+
+        <!-- KPIs: 2-col on mobile, 4-col on desktop -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="bg-white rounded-xl shadow-sm p-3 sm:p-4 relative overflow-hidden kpi-o hov-card">
+            <div class="absolute top-3 right-3 w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center">
+              <svg class="w-4 h-4 text-orange-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 12h.01"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>
+            </div>
+            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Today's Sales</p>
+            <p class="font-condensed font-extrabold text-2xl sm:text-3xl text-navy-900 mt-1 leading-none">8,159,700</p>
+            <p class="text-[10px] text-green-500 font-semibold mt-1.5">▲ +12% vs yesterday</p>
+            <p class="text-[9px] text-slate-400 mt-0.5">UGX</p>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-3 sm:p-4 relative overflow-hidden kpi-g hov-card">
+            <div class="absolute top-3 right-3 w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
+              <svg class="w-4 h-4 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">This Month</p>
+            <p class="font-condensed font-extrabold text-2xl sm:text-3xl text-navy-900 mt-1 leading-none">125.4M</p>
+            <p class="text-[10px] text-red-400 font-semibold mt-1.5">▼ -6.5% vs last month</p>
+            <p class="text-[9px] text-slate-400 mt-0.5">UGX</p>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-3 sm:p-4 relative overflow-hidden kpi-b hov-card">
+            <div class="absolute top-3 right-3 w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+              <svg class="w-4 h-4 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </div>
+            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pending Credit</p>
+            <p class="font-condensed font-extrabold text-2xl sm:text-3xl text-navy-900 mt-1 leading-none">48.7M</p>
+            <p class="text-[10px] text-slate-500 font-medium mt-1.5">22 customers</p>
+            <p class="text-[9px] text-slate-400 mt-0.5">UGX</p>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-3 sm:p-4 relative overflow-hidden kpi-r hov-card">
+            <div class="absolute top-3 right-3 w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
+              <svg class="w-4 h-4 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Low Stock</p>
+            <p class="font-condensed font-extrabold text-2xl sm:text-3xl text-navy-900 mt-1 leading-none">14</p>
+            <p class="text-[10px] text-red-500 font-semibold mt-1.5">⚠ Reorder now</p>
+            <p class="text-[9px] text-slate-400 mt-0.5">Items</p>
+          </div>
+        </div>
+
+        <!-- Charts: stack on mobile, side by side on lg -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div class="lg:col-span-2 bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+              <h3 class="font-semibold text-navy-900 text-sm">Weekly Sales</h3>
+              <select class="text-xs border border-slate-200 rounded-lg px-2 py-1 text-slate-600 bg-white">
+                <option>This Week</option><option>Last Week</option>
+              </select>
+            </div>
+            <div class="p-3 sm:p-4"><div id="weekChart" style="min-height:140px;"></div></div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-100">
+              <h3 class="font-semibold text-navy-900 text-sm">By Category</h3>
+            </div>
+            <div class="p-2"><div id="categoryChart" style="min-height:160px;"></div></div>
+          </div>
+        </div>
+
+        <!-- Alerts & recent: stack on mobile -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+              <h3 class="font-semibold text-navy-900 text-sm flex items-center gap-1.5"><svg class="w-4 h-4 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Low Stock Alerts</h3>
+              <button onclick="navigate('inventory')" class="text-orange-500 text-xs font-semibold">View All</button>
+            </div>
+            <div class="divide-y divide-slate-50">
+              <div class="flex items-center justify-between px-4 py-3"><div><p class="text-sm font-semibold text-slate-800">Steel Bar 16mm</p><p class="text-[10px] text-slate-400 font-mono">SKU: STB016</p></div><span class="bg-red-100 text-red-600 text-[10px] font-bold px-2.5 py-1 rounded-full">0.9 tonnes</span></div>
+              <div class="flex items-center justify-between px-4 py-3"><div><p class="text-sm font-semibold text-slate-800">Cement – Hima 50kg</p><p class="text-[10px] text-slate-400 font-mono">SKU: CEM001</p></div><span class="bg-amber-100 text-amber-600 text-[10px] font-bold px-2.5 py-1 rounded-full">12 bags</span></div>
+              <div class="flex items-center justify-between px-4 py-3"><div><p class="text-sm font-semibold text-slate-800">Nails 3"</p><p class="text-[10px] text-slate-400 font-mono">SKU: NAL003</p></div><span class="bg-red-100 text-red-600 text-[10px] font-bold px-2.5 py-1 rounded-full">2 boxes</span></div>
+              <div class="flex items-center justify-between px-4 py-3"><div><p class="text-sm font-semibold text-slate-800">PVC Pipe 4"</p><p class="text-[10px] text-slate-400 font-mono">SKU: PVC004</p></div><span class="bg-amber-100 text-amber-600 text-[10px] font-bold px-2.5 py-1 rounded-full">5 pcs</span></div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+              <h3 class="font-semibold text-navy-900 text-sm">Recent Credit Sales</h3>
+              <button onclick="navigate('sales')" class="text-orange-500 text-xs font-semibold">View All</button>
+            </div>
+            <div class="divide-y divide-slate-50">
+              <div class="flex items-center justify-between px-4 py-3"><div><p class="text-sm font-semibold text-slate-800">Selekt Contractors Ltd</p><p class="text-[10px] text-slate-400">05/05/2025</p></div><div class="text-right"><p class="font-mono text-sm font-bold text-navy-900">2,450,000</p><span class="text-[10px] bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded-full">Credit</span></div></div>
+              <div class="flex items-center justify-between px-4 py-3"><div><p class="text-sm font-semibold text-slate-800">Build Right Ltd</p><p class="text-[10px] text-slate-400">04/05/2025</p></div><div class="text-right"><p class="font-mono text-sm font-bold text-navy-900">1,875,000</p><span class="text-[10px] bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded-full">Credit</span></div></div>
+              <div class="flex items-center justify-between px-4 py-3"><div><p class="text-sm font-semibold text-slate-800">Mega Developers</p><p class="text-[10px] text-slate-400">03/05/2025</p></div><div class="text-right"><p class="font-mono text-sm font-bold text-navy-900">880,000</p><span class="text-[10px] bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded-full">Credit</span></div></div>
+              <div class="flex items-center justify-between px-4 py-3"><div><p class="text-sm font-semibold text-slate-800">Sunrise Hardware</p><p class="text-[10px] text-slate-400">02/05/2025</p></div><div class="text-right"><p class="font-mono text-sm font-bold text-navy-900">560,000</p><span class="text-[10px] bg-green-50 text-green-600 font-bold px-2 py-0.5 rounded-full">Paid</span></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Features -->
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <h3 class="font-condensed font-bold text-navy-900 text-base mb-3">Platform Features</h3>
+          <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            <div class="text-center p-2.5 rounded-xl bg-slate-50"><div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-1.5"><svg class="w-4 h-4 text-orange-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 7h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg></div><p class="text-[10px] font-bold text-navy-900 leading-tight">Offline First</p></div>
+            <div class="text-center p-2.5 rounded-xl bg-slate-50"><div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-1.5"><svg class="w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div><p class="text-[10px] font-bold text-navy-900 leading-tight">Barcode Scan</p></div>
+            <div class="text-center p-2.5 rounded-xl bg-slate-50"><div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-1.5"><svg class="w-4 h-4 text-yellow-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div><p class="text-[10px] font-bold text-navy-900 leading-tight">Mobile Money</p></div>
+            <div class="text-center p-2.5 rounded-xl bg-slate-50"><div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-1.5"><svg class="w-4 h-4 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><p class="text-[10px] font-bold text-navy-900 leading-tight">Deliveries</p></div>
+            <div class="text-center p-2.5 rounded-xl bg-slate-50"><div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-1.5"><svg class="w-4 h-4 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><p class="text-[10px] font-bold text-navy-900 leading-tight">VAT Compliant</p></div>
+            <div class="text-center p-2.5 rounded-xl bg-slate-50"><div class="w-8 h-8 bg-cyan-100 rounded-lg flex items-center justify-center mx-auto mb-1.5"><svg class="w-4 h-4 text-cyan-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.51"/></svg></div><p class="text-[10px] font-bold text-navy-900 leading-tight">Real-Time Sync</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== NEW SALE ======================== -->
+    <div class="page" id="page-newsale">
+      <!-- Desktop: side by side | Mobile: single column scrollable -->
+      <div class="flex flex-col lg:flex-row h-full lg:h-[calc(100vh-56px)] overflow-hidden">
+
+        <!-- LEFT: Products + Cart -->
+        <div class="flex flex-col flex-1 min-h-0 overflow-hidden border-b lg:border-b-0 lg:border-r border-slate-200">
+          <!-- Section header -->
+          <div class="bg-navy-900 px-3 sm:px-4 py-2.5 flex items-center gap-2 flex-shrink-0">
+            <span class="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center text-white text-[10px] font-extrabold flex-shrink-0">1</span>
+            <span class="text-white font-bold text-[11px] tracking-widest uppercase flex-1">Add Products</span>
+            <div class="bg-navy-800 rounded-full p-0.5 flex">
+              <button onclick="setGlobalPrice('retail',this)" class="ptbtn text-[10px] font-bold px-2.5 py-1 rounded-full bg-white text-navy-900 transition-all">Retail</button>
+              <button onclick="setGlobalPrice('wholesale',this)" class="ptbtn text-[10px] font-bold px-2.5 py-1 rounded-full text-white/50 transition-all">Wholesale</button>
+            </div>
+          </div>
+          <!-- Search -->
+          <div class="px-3 py-2 bg-white border-b border-slate-100 flex gap-2 flex-shrink-0">
+            <div class="relative flex-1">
+              <svg class="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input id="productSearch" class="w-full pl-8 pr-2 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:bg-white transition-colors" placeholder="Search product by name or SKU..." oninput="filterProducts(this.value)" onkeydown="handleSearchKey(event)" autocomplete="off">
+            </div>
+            <button onclick="showToast('Camera scanning ready','info')" class="bg-navy-900 text-white px-3 rounded-lg flex items-center">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            </button>
+          </div>
+          <!-- Results -->
+          <div id="productResults" class="border-b border-slate-100 bg-white flex-shrink-0" style="max-height:36vw;overflow-y:auto;"></div>
+
+          <!-- Cart table: scrollable on all sizes -->
+          <div class="flex-1 overflow-auto bg-white">
+            <!-- Desktop table -->
+            <div class="hidden md:block">
+              <table class="w-full border-collapse text-xs">
+                <thead class="sticky top-0 z-10">
+                  <tr class="bg-slate-50 border-b-2 border-slate-200">
+                    <th class="text-left px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 w-7">#</th>
+                    <th class="text-left px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Product</th>
+                    <th class="text-left px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 w-14">Unit</th>
+                    <th class="text-left px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 w-28">Qty</th>
+                    <th class="text-left px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 w-22">Type</th>
+                    <th class="text-right px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 w-24">Price</th>
+                    <th class="text-right px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 w-14">Disc%</th>
+                    <th class="text-right px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 w-22">VAT</th>
+                    <th class="text-right px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 w-24">Total</th>
+                    <th class="w-8"></th>
+                  </tr>
+                </thead>
+                <tbody id="cartBody"></tbody>
+              </table>
+            </div>
+            <!-- Mobile card list -->
+            <div class="md:hidden" id="cartMobileBody"></div>
+          </div>
+
+          <!-- Cart footer -->
+          <div class="bg-slate-50 border-t-2 border-slate-200 px-3 py-2.5 flex items-center justify-between flex-shrink-0">
+            <button onclick="document.getElementById('productSearch').focus()" class="flex items-center gap-1.5 bg-navy-900 hover:bg-navy-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Item
+            </button>
+            <div class="flex items-center gap-3 sm:gap-5">
+              <span class="text-slate-500 text-xs">Items: <strong class="text-navy-900" id="totalItems">0</strong></span>
+              <span class="font-condensed font-extrabold text-xl text-orange-500" id="cartTotal">UGX 0</span>
+            </div>
+          </div>
+
+          <!-- Shortcuts (desktop only) -->
+          <div class="hidden lg:flex bg-navy-900 flex-shrink-0">
+            <div class="flex items-center gap-1.5 px-3 py-2 border-r border-white/10 text-white/50 text-[11px] cursor-pointer hover:text-white/80 transition-colors"><kbd class="bg-navy-700 text-orange-400 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">F2</kbd> Search</div>
+            <div class="flex items-center gap-1.5 px-3 py-2 border-r border-white/10 text-white/50 text-[11px] cursor-pointer hover:text-white/80 transition-colors"><kbd class="bg-navy-700 text-orange-400 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">F4</kbd> Payment</div>
+            <div class="flex items-center gap-1.5 px-3 py-2 border-r border-white/10 text-white/50 text-[11px] cursor-pointer hover:text-white/80 transition-colors"><kbd class="bg-navy-700 text-orange-400 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">F8</kbd> Print</div>
+            <div class="flex items-center gap-1.5 px-3 py-2 text-white/50 text-[11px] cursor-pointer hover:text-white/80 transition-colors"><kbd class="bg-navy-700 text-orange-400 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">ESC</kbd> Cancel</div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Customer, Summary, Payment (scrollable on mobile) -->
+        <div class="flex-shrink-0 lg:w-80 xl:w-96 overflow-y-auto bg-slate-50 pb-20 lg:pb-0" id="posRight">
+
+          <!-- Customer -->
+          <div class="bg-white border-b border-slate-100">
+            <div class="bg-navy-900 px-3 py-2.5 flex items-center gap-2 justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center text-white text-[10px] font-extrabold">2</span>
+                <span class="text-white font-bold text-[11px] tracking-widest uppercase">Customer & Project</span>
+              </div>
+              <span class="text-[10px] font-bold bg-amber-400 text-white px-2 py-0.5 rounded">DRAFT</span>
+            </div>
+            <div class="p-3 space-y-2">
+              <div class="flex gap-2">
+                <div class="relative flex-1">
+                  <svg class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input id="custSearch" list="custList" class="w-full pl-8 pr-2 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50 focus:bg-white" placeholder="Search customer..." oninput="filterCustomers(this.value)">
+                  <datalist id="custList">
+                    <option value="Selekt Contractors Ltd"><option value="Build Right Ltd"><option value="Mega Developers"><option value="Walk-In Customer">
+                  </datalist>
+                </div>
+                <button onclick="openModal('customerModal')" class="bg-orange-500 hover:bg-orange-600 text-white w-9 rounded-lg flex items-center justify-center transition-colors">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+              </div>
+              <div id="custInfoBox" class="hidden bg-slate-50 rounded-lg p-2.5 border border-slate-200">
+                <div class="flex items-start justify-between gap-2">
+                  <div><p class="text-xs font-bold text-navy-900" id="custName">—</p><p class="text-[10px] text-slate-500 mt-0.5" id="custMeta">—</p></div>
+                  <button onclick="clearCustomer()" class="text-slate-400 hover:text-red-400 transition-colors p-0.5">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Project / Site</label>
+                <select class="w-full mt-1 border border-slate-200 rounded-lg px-2 py-2 text-xs bg-white focus:border-orange-400">
+                  <option>Sky View Apartments – Ntinda</option>
+                  <option>Kampala Ring Road Project</option>
+                  <option>Naalya Housing Estate</option>
+                  <option>+ Add New Project</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary -->
+          <div class="bg-white border-b border-slate-100">
+            <div class="bg-navy-900 px-3 py-2.5 flex items-center gap-2 justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center text-white text-[10px] font-extrabold">3</span>
+                <span class="text-white font-bold text-[11px] tracking-widest uppercase">Summary</span>
+              </div>
+              <span class="text-white/40 text-[10px]">UGX</span>
+            </div>
+            <div class="p-3 space-y-2">
+              <div class="flex justify-between text-xs"><span class="text-slate-500">Subtotal (Excl. VAT)</span><span class="font-mono font-semibold text-slate-800" id="subtotal">0</span></div>
+              <div class="flex justify-between text-xs"><span class="text-slate-500">Discount</span><span class="font-mono font-semibold text-green-500" id="discTotal">0</span></div>
+              <div class="flex justify-between text-xs"><span class="text-slate-500">VAT (18%)</span><span class="font-mono font-semibold text-slate-800" id="vatTotal">0</span></div>
+              <div class="border-t-2 border-slate-200 pt-2 flex justify-between items-center">
+                <span class="font-bold text-sm text-navy-900">Grand Total</span>
+                <span class="font-condensed font-extrabold text-3xl text-navy-900 leading-none" id="grandTotal">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment -->
+          <div class="bg-white border-b border-slate-100">
+            <div class="bg-navy-900 px-3 py-2.5 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center text-white text-[10px] font-extrabold">4</span>
+              <span class="text-white font-bold text-[11px] tracking-widest uppercase">Payment Method</span>
+            </div>
+            <div class="p-3 grid grid-cols-4 gap-2 mb-1">
+              <button onclick="selectPayment(this,'cash')" class="pay-btn pay-sel flex flex-col items-center gap-1.5 border-2 border-orange-400 bg-orange-50 rounded-xl py-2.5 px-1 transition-all text-orange-500">
+                <div class="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center"><svg class="w-4 h-4 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 12h.01"/></svg></div>
+                <span class="text-[10px] font-bold">Cash</span>
+              </button>
+              <button onclick="selectPayment(this,'mtn')" class="pay-btn flex flex-col items-center gap-1.5 border-2 border-slate-200 rounded-xl py-2.5 px-1 transition-all text-slate-600 hover:border-orange-300">
+                <div class="w-7 h-7 rounded-lg bg-yellow-50 flex items-center justify-center"><svg class="w-4 h-4 text-yellow-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
+                <span class="text-[10px] font-bold">MTN</span>
+              </button>
+              <button onclick="selectPayment(this,'airtel')" class="pay-btn flex flex-col items-center gap-1.5 border-2 border-slate-200 rounded-xl py-2.5 px-1 transition-all text-slate-600 hover:border-orange-300">
+                <div class="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center"><svg class="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1.3 12A10.7 10.7 0 0 1 12 1.3M12 22.7A10.7 10.7 0 0 1 1.3 12M22.7 12A10.7 10.7 0 0 1 12 22.7M12 1.3A10.7 10.7 0 0 1 22.7 12"/></svg></div>
+                <span class="text-[10px] font-bold">Airtel</span>
+              </button>
+              <button onclick="selectPayment(this,'credit')" class="pay-btn flex flex-col items-center gap-1.5 border-2 border-slate-200 rounded-xl py-2.5 px-1 transition-all text-slate-600 hover:border-orange-300">
+                <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center"><svg class="w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+                <span class="text-[10px] font-bold">Credit</span>
+              </button>
+            </div>
+            <div class="px-3 pb-3 grid grid-cols-2 gap-2">
+              <div><label class="text-[10px] font-bold text-slate-400 uppercase">Due Date</label><input type="date" class="w-full mt-1 border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:border-orange-400 bg-slate-50"></div>
+              <div><label class="text-[10px] font-bold text-slate-400 uppercase">Reference</label><input type="text" placeholder="Notes..." class="w-full mt-1 border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:border-orange-400 bg-slate-50"></div>
+            </div>
+          </div>
+
+          <!-- Delivery -->
+          <div class="bg-white border-b border-slate-100">
+            <div class="bg-navy-900 px-3 py-2.5 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center text-white text-[10px] font-extrabold">5</span>
+              <span class="text-white font-bold text-[11px] tracking-widest uppercase">Delivery</span>
+            </div>
+            <div class="px-3 py-2.5 flex items-center justify-between">
+              <span class="text-xs text-slate-500">Attach delivery note</span>
+              <button onclick="openModal('deliveryModal')" class="text-xs font-semibold text-blue-500 border border-blue-200 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Note
+              </button>
+            </div>
+          </div>
+
+          <!-- Complete -->
+          <div class="p-3">
+            <button onclick="completeSale()" class="w-full bg-orange-500 hover:bg-orange-600 active:scale-[0.99] text-white font-condensed font-extrabold text-xl py-4 rounded-xl tracking-widest transition-all shadow-lg shadow-orange-200 flex items-center justify-center gap-2">
+              Complete Sale
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== SALES ======================== -->
+    <div class="page p-3 sm:p-4 lg:p-5 pb-20 lg:pb-5" id="page-sales">
+      <div class="flex items-center justify-between mb-4 gap-2">
+        <div><h2 class="font-condensed font-bold text-xl sm:text-2xl text-navy-900">Sales History</h2><p class="text-xs text-slate-500">All transactions and invoices</p></div>
+        <div class="flex gap-2 flex-shrink-0">
+          <button onclick="showToast('Exporting PDF...','info')" class="border border-slate-200 bg-white text-xs font-semibold px-3 py-2 rounded-lg hover:border-orange-300 transition-colors hidden sm:flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export
+          </button>
+          <button onclick="navigate('newsale')" class="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New Sale
+          </button>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="px-3 py-2.5 border-b border-slate-100 flex items-center gap-2 flex-wrap">
+          <div class="relative flex-1 min-w-36">
+            <svg class="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="w-full pl-8 pr-2 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50" placeholder="Search...">
+          </div>
+          <select class="border border-slate-200 rounded-lg px-2 py-2 text-xs bg-white"><option>All Status</option><option>Paid</option><option>Credit</option></select>
+          <select class="hidden sm:block border border-slate-200 rounded-lg px-2 py-2 text-xs bg-white"><option>All Payment</option><option>Cash</option><option>MTN</option><option>Airtel</option><option>Credit</option></select>
+        </div>
+        <!-- Desktop table -->
+        <div class="hidden md:block table-wrap">
+          <table class="w-full text-xs">
+            <thead><tr class="bg-slate-50 border-b-2 border-slate-200">
+              <th class="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Invoice #</th>
+              <th class="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Date</th>
+              <th class="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Customer</th>
+              <th class="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Total (UGX)</th>
+              <th class="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Payment</th>
+              <th class="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Status</th>
+              <th class="px-4 py-3"></th>
+            </tr></thead>
+            <tbody id="salesTableBody" class="divide-y divide-slate-50"></tbody>
+          </table>
+        </div>
+        <!-- Mobile cards -->
+        <div class="md:hidden divide-y divide-slate-100" id="salesMobileBody"></div>
+        <div class="px-4 py-3 border-t border-slate-100 flex items-center justify-between">
+          <span class="text-xs text-slate-500">1–8 of 356</span>
+          <div class="flex gap-1">
+            <button class="w-7 h-7 border border-slate-200 rounded-md text-xs flex items-center justify-center hover:border-orange-400 transition-colors">‹</button>
+            <button class="w-7 h-7 bg-orange-500 text-white rounded-md text-xs flex items-center justify-center font-bold">1</button>
+            <button class="w-7 h-7 border border-slate-200 rounded-md text-xs flex items-center justify-center hover:border-orange-400 transition-colors">2</button>
+            <button class="w-7 h-7 border border-slate-200 rounded-md text-xs flex items-center justify-center hover:border-orange-400 transition-colors">›</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== DELIVERIES ======================== -->
+    <div class="page p-3 sm:p-4 lg:p-5 pb-20 lg:pb-5" id="page-deliveries">
+      <div class="flex items-center justify-between mb-4">
+        <div><h2 class="font-condensed font-bold text-xl sm:text-2xl text-navy-900">Deliveries</h2><p class="text-xs text-slate-500">Track delivery notes</p></div>
+        <button onclick="openModal('deliveryModal')" class="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New DN
+        </button>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="hidden md:block table-wrap"><table class="w-full text-xs"><thead><tr class="bg-slate-50 border-b-2 border-slate-200"><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">DN #</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Date</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Customer</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Site</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Driver</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Vehicle</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Status</th><th class="px-4 py-3"></th></tr></thead><tbody id="deliveriesTableBody" class="divide-y divide-slate-50"></tbody></table></div>
+        <div class="md:hidden divide-y divide-slate-100" id="deliveriesMobileBody"></div>
+      </div>
+    </div>
+
+    <!-- ======================== PRODUCTS ======================== -->
+    <div class="page p-3 sm:p-4 lg:p-5 pb-20 lg:pb-5" id="page-products">
+      <div class="flex items-center justify-between mb-4 gap-2">
+        <div><h2 class="font-condensed font-bold text-xl sm:text-2xl text-navy-900">Products</h2><p class="text-xs text-slate-500">Product catalog</p></div>
+        <div class="flex gap-2 flex-shrink-0">
+          <button onclick="openModal('productModal')" class="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Product
+          </button>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="px-3 py-2.5 border-b border-slate-100 flex items-center gap-2">
+          <div class="relative flex-1"><svg class="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input class="w-full pl-8 pr-2 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50" placeholder="Search products..."></div>
+          <select class="border border-slate-200 rounded-lg px-2 py-2 text-xs bg-white"><option>All Categories</option><option>Cement</option><option>Steel</option><option>Aggregates</option></select>
+        </div>
+        <div class="hidden md:block table-wrap"><table class="w-full text-xs"><thead><tr class="bg-slate-50 border-b-2 border-slate-200"><th class="px-4 py-3 w-8"></th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Product</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">SKU</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Category</th><th class="text-right px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Retail (UGX)</th><th class="text-right px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Wholesale</th><th class="text-right px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Stock</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Status</th><th class="px-4 py-3"></th></tr></thead><tbody id="productsTableBody" class="divide-y divide-slate-50"></tbody></table></div>
+        <div class="md:hidden divide-y divide-slate-100" id="productsMobileBody"></div>
+      </div>
+    </div>
+
+    <!-- ======================== INVENTORY ======================== -->
+    <div class="page p-3 sm:p-4 lg:p-5 pb-20 lg:pb-5" id="page-inventory">
+      <div class="flex items-center justify-between mb-4">
+        <div><h2 class="font-condensed font-bold text-xl sm:text-2xl text-navy-900">Inventory</h2><p class="text-xs text-slate-500">Stock across all warehouses</p></div>
+        <button onclick="openModal('stockModal')" class="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Adjust Stock
+        </button>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3" id="inventoryGrid"></div>
+    </div>
+
+    <!-- ======================== CUSTOMERS ======================== -->
+    <div class="page p-3 sm:p-4 lg:p-5 pb-20 lg:pb-5" id="page-customers">
+      <div class="flex items-center justify-between mb-4">
+        <div><h2 class="font-condensed font-bold text-xl sm:text-2xl text-navy-900">Customers & Contractors</h2><p class="text-xs text-slate-500">Accounts and credit limits</p></div>
+        <button onclick="openModal('customerModal')" class="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Customer
+        </button>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="hidden md:block table-wrap"><table class="w-full text-xs"><thead><tr class="bg-slate-50 border-b-2 border-slate-200"><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Customer</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Type</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Phone</th><th class="text-right px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Credit Limit</th><th class="text-right px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Outstanding</th><th class="text-right px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Available</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Status</th><th class="px-4 py-3"></th></tr></thead><tbody id="customersTableBody" class="divide-y divide-slate-50"></tbody></table></div>
+        <div class="md:hidden divide-y divide-slate-100" id="customersMobileBody"></div>
+      </div>
+    </div>
+
+    <!-- ======================== SUPPLIERS ======================== -->
+    <div class="page p-3 sm:p-4 lg:p-5 pb-20 lg:pb-5" id="page-suppliers">
+      <div class="flex items-center justify-between mb-4">
+        <div><h2 class="font-condensed font-bold text-xl sm:text-2xl text-navy-900">Suppliers</h2><p class="text-xs text-slate-500">Manage suppliers</p></div>
+        <button onclick="openModal('supplierModal')" class="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Supplier
+        </button>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="hidden md:block table-wrap"><table class="w-full text-xs"><thead><tr class="bg-slate-50 border-b-2 border-slate-200"><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Supplier</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Category</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Contact</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Phone</th><th class="text-center px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Lead</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Last Order</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Status</th><th class="px-4 py-3"></th></tr></thead><tbody id="suppliersTableBody" class="divide-y divide-slate-50"></tbody></table></div>
+        <div class="md:hidden divide-y divide-slate-100" id="suppliersMobileBody"></div>
+      </div>
+    </div>
+
+    <!-- ======================== REPORTS ======================== -->
+    <div class="page p-3 sm:p-4 lg:p-5 pb-20 lg:pb-5" id="page-reports">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+        <div>
+          <h2 class="font-condensed font-bold text-xl sm:text-2xl text-navy-900">Reports</h2>
+          <p class="text-xs text-green-600 font-semibold mt-0.5">✓ VAT inclusive and URA compliant</p>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          <select class="border border-slate-200 rounded-lg px-2 py-2 text-xs bg-white"><option>Sales Report</option><option>VAT Report</option><option>Stock Report</option></select>
+          <input type="date" class="border border-slate-200 rounded-lg px-2 py-2 text-xs bg-white" value="2025-05-01">
+          <input type="date" class="border border-slate-200 rounded-lg px-2 py-2 text-xs bg-white" value="2025-05-31">
+          <button onclick="showToast('Exporting report...','info')" class="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export
+          </button>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <div class="bg-white rounded-xl shadow-sm p-3 sm:p-4 kpi-o"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Sales</p><p class="font-condensed font-extrabold text-xl sm:text-2xl text-navy-900 mt-1">125,450,000</p><p class="text-[10px] text-slate-400 mt-1">356 transactions</p></div>
+        <div class="bg-white rounded-xl shadow-sm p-3 sm:p-4 kpi-g"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total VAT</p><p class="font-condensed font-extrabold text-xl sm:text-2xl text-navy-900 mt-1">19,057,627</p><p class="text-[10px] text-slate-400 mt-1">18% rate</p></div>
+        <div class="bg-white rounded-xl shadow-sm p-3 sm:p-4 kpi-b"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Transactions</p><p class="font-condensed font-extrabold text-xl sm:text-2xl text-navy-900 mt-1">356</p><p class="text-[10px] text-slate-400 mt-1">This period</p></div>
+        <div class="bg-white rounded-xl shadow-sm p-3 sm:p-4 kpi-r"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Avg Sale</p><p class="font-condensed font-extrabold text-xl sm:text-2xl text-navy-900 mt-1">352,388</p><p class="text-[10px] text-slate-400 mt-1">Per transaction</p></div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-4"><div class="px-4 py-3 border-b border-slate-100"><h3 class="font-semibold text-navy-900 text-sm">Sales Trend — May 2025</h3></div><div class="p-3 sm:p-4"><div id="reportChart" style="min-height:160px;"></div></div></div>
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="hidden md:block table-wrap"><table class="w-full text-xs"><thead><tr class="bg-slate-50 border-b-2 border-slate-200"><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Date</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Invoice</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Customer</th><th class="text-right px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Subtotal</th><th class="text-right px-4 py-3 text-[10px] font-bold uppercase text-slate-400">VAT</th><th class="text-right px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Total</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Payment</th></tr></thead><tbody id="reportTableBody" class="divide-y divide-slate-50"></tbody></table></div>
+        <div class="md:hidden divide-y divide-slate-100" id="reportMobileBody"></div>
+      </div>
+    </div>
+
+    <!-- ======================== USERS ======================== -->
+    <div class="page p-3 sm:p-4 lg:p-5 pb-20 lg:pb-5" id="page-users">
+      <div class="flex items-center justify-between mb-4">
+        <div><h2 class="font-condensed font-bold text-xl sm:text-2xl text-navy-900">User Management</h2><p class="text-xs text-slate-500">Staff access and permissions</p></div>
+        <button onclick="openModal('userModal')" class="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add User
+        </button>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="hidden md:block table-wrap"><table class="w-full text-xs"><thead><tr class="bg-slate-50 border-b-2 border-slate-200"><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Name</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Username</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Role</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Warehouse</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Last Login</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Status</th><th class="px-4 py-3"></th></tr></thead><tbody id="usersTableBody" class="divide-y divide-slate-50"></tbody></table></div>
+        <div class="md:hidden divide-y divide-slate-100" id="usersMobileBody"></div>
+      </div>
+    </div>
+
+    <!-- ======================== SETTINGS ======================== -->
+    <div class="page p-3 sm:p-4 lg:p-5 pb-20 lg:pb-5" id="page-settings">
+      <div class="flex items-center justify-between mb-4">
+        <div><h2 class="font-condensed font-bold text-xl sm:text-2xl text-navy-900">Settings</h2><p class="text-xs text-slate-500">Configure your POS system</p></div>
+        <button onclick="showToast('Settings saved!','success')" class="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save
+        </button>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div class="px-4 py-3 border-b border-slate-100 flex items-center gap-2"><svg class="w-4 h-4 text-orange-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><h3 class="font-semibold text-navy-900 text-sm">Business Information</h3></div>
+          <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="sm:col-span-2"><label class="text-[10px] font-bold text-slate-400 uppercase">Business Name</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:border-orange-400" value="STUD Engineering Ltd"></div>
+            <div><label class="text-[10px] font-bold text-slate-400 uppercase">TIN Number</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono focus:border-orange-400" value="1000234567"></div>
+            <div><label class="text-[10px] font-bold text-slate-400 uppercase">VAT Number</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono focus:border-orange-400" value="V123456789"></div>
+            <div><label class="text-[10px] font-bold text-slate-400 uppercase">Phone</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:border-orange-400" value="+256 414 123456"></div>
+            <div><label class="text-[10px] font-bold text-slate-400 uppercase">Email</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:border-orange-400" value="info@stud.co.ug"></div>
+            <div class="sm:col-span-2"><label class="text-[10px] font-bold text-slate-400 uppercase">Address</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:border-orange-400" value="Plot 123, Nakawa, Kampala, Uganda"></div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div class="px-4 py-3 border-b border-slate-100 flex items-center gap-2"><svg class="w-4 h-4 text-orange-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><h3 class="font-semibold text-navy-900 text-sm">System Settings</h3></div>
+          <div class="p-4 space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div><label class="text-[10px] font-bold text-slate-400 uppercase">Currency</label><select class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:border-orange-400"><option>UGX – Uganda Shilling</option><option>USD</option></select></div>
+              <div><label class="text-[10px] font-bold text-slate-400 uppercase">VAT Rate (%)</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono focus:border-orange-400" value="18"></div>
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-400 uppercase block mb-2">Features</label>
+              <div class="space-y-2">
+                <label class="flex items-center justify-between py-2 border-b border-slate-50 cursor-pointer"><span class="text-sm text-slate-700">Offline Mode</span><input type="checkbox" checked class="w-4 h-4 accent-orange-500"></label>
+                <label class="flex items-center justify-between py-2 border-b border-slate-50 cursor-pointer"><span class="text-sm text-slate-700">VAT Calculation (18%)</span><input type="checkbox" checked class="w-4 h-4 accent-orange-500"></label>
+                <label class="flex items-center justify-between py-2 border-b border-slate-50 cursor-pointer"><span class="text-sm text-slate-700">Delivery Notes</span><input type="checkbox" checked class="w-4 h-4 accent-orange-500"></label>
+                <label class="flex items-center justify-between py-2 cursor-pointer"><span class="text-sm text-slate-700">Barcode Scanning</span><input type="checkbox" checked class="w-4 h-4 accent-orange-500"></label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div class="px-4 py-3 border-b border-slate-100 flex items-center gap-2"><svg class="w-4 h-4 text-orange-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg><h3 class="font-semibold text-navy-900 text-sm">Mobile Money Settings</h3></div>
+          <div class="p-4 space-y-4">
+            <div><label class="text-[10px] font-bold text-slate-400 uppercase">MTN Mobile Money</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono focus:border-orange-400" value="0772 345678"></div>
+            <div><label class="text-[10px] font-bold text-slate-400 uppercase">Airtel Money</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono focus:border-orange-400" value="0701 234567"></div>
+            <div><label class="text-[10px] font-bold text-slate-400 uppercase">MTN Merchant Code</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono focus:border-orange-400" value="MTN-STUD-001"></div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between"><div class="flex items-center gap-2"><svg class="w-4 h-4 text-orange-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><h3 class="font-semibold text-navy-900 text-sm">Warehouses</h3></div><button class="text-xs bg-orange-500 text-white px-3 py-1 rounded-lg font-bold">+ Add</button></div>
+          <div class="divide-y divide-slate-50">
+            <div class="px-4 py-3 flex items-center justify-between"><div><p class="text-sm font-bold text-navy-900">Nakawa</p><p class="text-[11px] text-slate-400">Nakawa Industrial · James Opio</p></div><button class="text-blue-500 text-xs font-semibold p-1">✏</button></div>
+            <div class="px-4 py-3 flex items-center justify-between"><div><p class="text-sm font-bold text-navy-900">Mpererwe</p><p class="text-[11px] text-slate-400">Mpererwe, Kampala · Sarah Nakayi</p></div><button class="text-blue-500 text-xs font-semibold p-1">✏</button></div>
+            <div class="px-4 py-3 flex items-center justify-between"><div><p class="text-sm font-bold text-navy-900">Kiira Rd</p><p class="text-[11px] text-slate-400">Kiira Road · Peter Muwonge</p></div><button class="text-blue-500 text-xs font-semibold p-1">✏</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div><!-- end main -->
+</div><!-- end app -->
+
+<!-- ======================== MOBILE BOTTOM NAV ======================== -->
+<nav class="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 shadow-lg safe-bottom">
+  <div class="flex items-center justify-around px-1 py-1.5">
+    <button onclick="navigate('dashboard')" class="mob-nav-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-colors">
+      <svg class="mob-nav-icon w-5 h-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span class="mob-nav-label text-[9px] text-slate-400 font-semibold">Dashboard</span>
+    </button>
+    <button onclick="navigate('newsale')" class="mob-nav-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-colors">
+      <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center -mt-5 shadow-lg shadow-orange-200">
+        <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      </div>
+      <span class="mob-nav-label text-[9px] text-slate-400 font-semibold mt-0.5">Sale</span>
+    </button>
+    <button onclick="navigate('inventory')" class="mob-nav-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-colors">
+      <svg class="mob-nav-icon w-5 h-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      <span class="mob-nav-label text-[9px] text-slate-400 font-semibold">Inventory</span>
+    </button>
+    <button onclick="navigate('reports')" class="mob-nav-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-colors">
+      <svg class="mob-nav-icon w-5 h-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span class="mob-nav-label text-[9px] text-slate-400 font-semibold">Reports</span>
+    </button>
+    <button onclick="openSidebar()" class="mob-nav-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-colors">
+      <svg class="mob-nav-icon w-5 h-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      <span class="mob-nav-label text-[9px] text-slate-400 font-semibold">More</span>
+    </button>
+  </div>
+</nav>
+
+<!-- ======================== MODALS (responsive) ======================== -->
+<!-- Helper: all modals are full-screen on mobile, centered on tablet+ -->
+<!-- Customer Modal -->
+<div id="customerModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target===this)closeModal('customerModal')">
+  <div class="m-box sm:m-box bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl overflow-hidden shadow-2xl">
+    <div class="bg-navy-900 px-5 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3"><div class="w-7 h-7 bg-orange-500 rounded-lg flex items-center justify-center"><svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><h3 class="font-condensed font-bold text-white text-lg">Add Customer</h3></div>
+      <button onclick="closeModal('customerModal')" class="text-white/50 hover:text-white p-1"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="p-5 grid grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto">
+      <div class="col-span-2"><label class="text-[10px] font-bold text-slate-400 uppercase">Customer Name *</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm" placeholder="e.g. Selekt Contractors Ltd"></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Type</label><select class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm"><option>Contractor</option><option>Retail</option><option>Wholesale</option></select></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Phone *</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono" placeholder="0772 345678"></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">TIN Number</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono" placeholder="1000000000"></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Credit Limit (UGX)</label><input type="number" class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono" placeholder="0"></div>
+      <div class="col-span-2"><label class="text-[10px] font-bold text-slate-400 uppercase">Address</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm" placeholder="Plot No, Street, Kampala"></div>
+    </div>
+    <div class="px-5 pb-5 pt-3 flex gap-3 justify-end border-t border-slate-100">
+      <button onclick="closeModal('customerModal')" class="border border-slate-200 text-slate-600 text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-slate-50 transition-colors">Cancel</button>
+      <button onclick="closeModal('customerModal');showToast('Customer saved','success')" class="bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-colors">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Product Modal -->
+<div id="productModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target===this)closeModal('productModal')">
+  <div class="m-box bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl overflow-hidden shadow-2xl">
+    <div class="bg-navy-900 px-5 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3"><div class="w-7 h-7 bg-orange-500 rounded-lg flex items-center justify-center"><svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div><h3 class="font-condensed font-bold text-white text-lg">Add Product</h3></div>
+      <button onclick="closeModal('productModal')" class="text-white/50 hover:text-white p-1"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="p-5 grid grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto">
+      <div class="col-span-2"><label class="text-[10px] font-bold text-slate-400 uppercase">Product Name *</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm" placeholder="e.g. Cement – Hima 50kg"></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">SKU *</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono" placeholder="CEM001"></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Category</label><select class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm"><option>Cement</option><option>Steel</option><option>Aggregates</option><option>Paint</option></select></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Unit</label><select class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm"><option>Bag</option><option>Tonne</option><option>m³</option><option>Piece</option></select></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Retail Price (UGX)</label><input type="number" class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono" placeholder="0"></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Wholesale Price</label><input type="number" class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono" placeholder="0"></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Opening Stock</label><input type="number" class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono" placeholder="0"></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Reorder Level</label><input type="number" class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono" placeholder="0"></div>
+    </div>
+    <div class="px-5 pb-5 pt-3 flex gap-3 justify-end border-t border-slate-100">
+      <button onclick="closeModal('productModal')" class="border border-slate-200 text-slate-600 text-sm font-semibold px-5 py-2.5 rounded-xl">Cancel</button>
+      <button onclick="closeModal('productModal');showToast('Product saved','success')" class="bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-colors">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delivery Modal -->
+<div id="deliveryModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target===this)closeModal('deliveryModal')">
+  <div class="m-box bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl overflow-hidden shadow-2xl">
+    <div class="bg-navy-900 px-5 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3"><div class="w-7 h-7 bg-orange-500 rounded-lg flex items-center justify-center"><svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><h3 class="font-condensed font-bold text-white text-lg">Delivery Note</h3></div>
+      <button onclick="closeModal('deliveryModal')" class="text-white/50 hover:text-white p-1"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="p-5 grid grid-cols-2 gap-4">
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">DN #</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono bg-slate-50" value="DN-2025-0090" readonly></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Delivery Date</label><input type="date" class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:border-orange-400"></div>
+      <div class="col-span-2"><label class="text-[10px] font-bold text-slate-400 uppercase">Site Address</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm" placeholder="Delivery address"></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Driver Name</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm" placeholder="Driver name"></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Vehicle Reg.</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono" placeholder="UAA 000A"></div>
+    </div>
+    <div class="px-5 pb-5 pt-3 flex gap-2 border-t border-slate-100">
+      <button onclick="closeModal('deliveryModal')" class="border border-slate-200 text-slate-600 text-sm font-semibold px-4 py-2.5 rounded-xl">Cancel</button>
+      <button onclick="closeModal('deliveryModal');showToast('Printing...','info')" class="border border-blue-200 text-blue-600 bg-blue-50 text-sm font-semibold px-4 py-2.5 rounded-xl">🖨 Print</button>
+      <button onclick="closeModal('deliveryModal');showToast('Delivery note created','success')" class="bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold px-4 py-2.5 rounded-xl ml-auto transition-colors">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Stock Modal -->
+<div id="stockModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target===this)closeModal('stockModal')">
+  <div class="m-box bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-3xl overflow-hidden shadow-2xl">
+    <div class="bg-navy-900 px-5 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3"><div class="w-7 h-7 bg-orange-500 rounded-lg flex items-center justify-center"><svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div><h3 class="font-condensed font-bold text-white text-lg">Stock Adjustment</h3></div>
+      <button onclick="closeModal('stockModal')" class="text-white/50 hover:text-white p-1"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="p-5 grid grid-cols-2 gap-4">
+      <div class="col-span-2"><label class="text-[10px] font-bold text-slate-400 uppercase">Product</label><select class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm"><option>Cement – Hima 50kg</option><option>Steel Bar 12mm</option></select></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Warehouse</label><select class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm"><option>Nakawa</option><option>Mpererwe</option></select></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Type</label><select class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm"><option>Stock In</option><option>Stock Out</option><option>Transfer</option></select></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Quantity</label><input type="number" class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono" placeholder="0"></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Unit Cost (UGX)</label><input type="number" class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono" placeholder="0"></div>
+    </div>
+    <div class="px-5 pb-5 pt-3 flex gap-3 justify-end border-t border-slate-100">
+      <button onclick="closeModal('stockModal')" class="border border-slate-200 text-slate-600 text-sm font-semibold px-5 py-2.5 rounded-xl">Cancel</button>
+      <button onclick="closeModal('stockModal');showToast('Stock adjusted','success')" class="bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-colors">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- User Modal -->
+<div id="userModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target===this)closeModal('userModal')">
+  <div class="m-box bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-3xl overflow-hidden shadow-2xl">
+    <div class="bg-navy-900 px-5 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3"><div class="w-7 h-7 bg-orange-500 rounded-lg flex items-center justify-center"><svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><h3 class="font-condensed font-bold text-white text-lg">Add User</h3></div>
+      <button onclick="closeModal('userModal')" class="text-white/50 hover:text-white p-1"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="p-5 grid grid-cols-2 gap-4">
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Full Name</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm" placeholder="Staff full name"></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Username</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono" placeholder="username"></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Role</label><select class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm"><option>Admin</option><option>Manager</option><option>Cashier</option><option>Storekeeper</option></select></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Warehouse</label><select class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm"><option>Nakawa</option><option>Mpererwe</option><option>All</option></select></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Phone</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono" placeholder="0772 000000"></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Password</label><input type="password" class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm" placeholder="••••••••"></div>
+    </div>
+    <div class="px-5 pb-5 pt-3 flex gap-3 justify-end border-t border-slate-100">
+      <button onclick="closeModal('userModal')" class="border border-slate-200 text-slate-600 text-sm font-semibold px-5 py-2.5 rounded-xl">Cancel</button>
+      <button onclick="closeModal('userModal');showToast('User created','success')" class="bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-colors">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Supplier Modal -->
+<div id="supplierModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target===this)closeModal('supplierModal')">
+  <div class="m-box bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-3xl overflow-hidden shadow-2xl">
+    <div class="bg-navy-900 px-5 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3"><div class="w-7 h-7 bg-orange-500 rounded-lg flex items-center justify-center"><svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><h3 class="font-condensed font-bold text-white text-lg">Add Supplier</h3></div>
+      <button onclick="closeModal('supplierModal')" class="text-white/50 hover:text-white p-1"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="p-5 grid grid-cols-2 gap-4">
+      <div class="col-span-2"><label class="text-[10px] font-bold text-slate-400 uppercase">Supplier Name *</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm" placeholder="Company name"></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Category</label><select class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm"><option>Cement</option><option>Steel</option><option>Aggregates</option><option>Paint</option></select></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Contact Person</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm" placeholder="Name"></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Phone</label><input class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono" placeholder="0772 000000"></div>
+      <div><label class="text-[10px] font-bold text-slate-400 uppercase">Lead Time (days)</label><input type="number" class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono" placeholder="3"></div>
+    </div>
+    <div class="px-5 pb-5 pt-3 flex gap-3 justify-end border-t border-slate-100">
+      <button onclick="closeModal('supplierModal')" class="border border-slate-200 text-slate-600 text-sm font-semibold px-5 py-2.5 rounded-xl">Cancel</button>
+      <button onclick="closeModal('supplierModal');showToast('Supplier saved','success')" class="bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-colors">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Receipt Modal -->
+<div id="receiptModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target===this){closeModal('receiptModal');clearSale();}">
+  <div class="m-box bg-white w-full sm:max-w-sm sm:rounded-2xl rounded-t-3xl overflow-hidden shadow-2xl text-center">
+    <div class="bg-gradient-to-br from-green-400 to-green-600 px-6 py-8">
+      <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
+        <svg class="w-7 h-7 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h3 class="font-condensed font-extrabold text-white text-2xl">Sale Complete!</h3>
+      <p class="text-white/80 text-sm mt-1" id="receiptInvoice">Invoice: INV-2025-0090</p>
+    </div>
+    <div class="p-5">
+      <div class="bg-slate-50 rounded-xl p-4 text-left space-y-2.5 mb-5">
+        <div class="flex justify-between text-sm"><span class="text-slate-500">Customer</span><span class="font-semibold text-xs text-right" id="rcptCust">—</span></div>
+        <div class="flex justify-between text-sm"><span class="text-slate-500">Items</span><span class="font-semibold" id="rcptItems">—</span></div>
+        <div class="flex justify-between text-sm"><span class="text-slate-500">Payment</span><span class="font-semibold" id="rcptPayment">—</span></div>
+        <div class="border-t border-slate-200 pt-2.5 flex justify-between items-center"><span class="font-bold">Grand Total</span><span class="font-condensed font-extrabold text-2xl text-orange-500" id="rcptTotal">—</span></div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="closeModal('receiptModal');clearSale()" class="flex-1 border border-slate-200 text-slate-600 text-sm font-semibold py-2.5 rounded-xl hover:bg-slate-50 transition-colors">Close</button>
+        <button onclick="showToast('Printing...','info')" class="flex-1 border border-blue-200 text-blue-600 bg-blue-50 text-sm font-semibold py-2.5 rounded-xl flex items-center justify-center gap-1">🖨 Print</button>
+        <button onclick="closeModal('receiptModal');clearSale();navigate('newsale')" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold py-2.5 rounded-xl transition-colors">New Sale</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div id="toastContainer" class="fixed bottom-20 lg:bottom-5 right-3 z-50 flex flex-col gap-2"></div>
+
+<script>
+// ===== DATA =====
+const PRODUCTS = [
+  { id:1, name:'Cement – Hima 50kg', sku:'CEM001', cat:'Cement', unit:'bag', icon:'🏗', retail:15000, wholesale:13500, stock:210, reorder:50 },
+  { id:2, name:'Steel Bar 12mm', sku:'STB012', cat:'Steel', unit:'tonne', icon:'🔩', retail:2300000, wholesale:2100000, stock:3.4, reorder:2 },
+  { id:3, name:'Sand (Building)', sku:'SAN001', cat:'Aggregates', unit:'m³', icon:'⛱', retail:85000, wholesale:75000, stock:12.6, reorder:5 },
+  { id:4, name:'Aggregates 20mm', sku:'AGG020', cat:'Aggregates', unit:'m³', icon:'🪨', retail:110000, wholesale:95000, stock:8.3, reorder:4 },
+  { id:5, name:'Steel Bar 16mm', sku:'STB016', cat:'Steel', unit:'tonne', icon:'🔩', retail:2600000, wholesale:2350000, stock:0.9, reorder:2 },
+  { id:6, name:'Paint – Dulux 20L', sku:'PA020', cat:'Paint', unit:'tin', icon:'🎨', retail:145000, wholesale:130000, stock:15, reorder:5 },
+  { id:7, name:'Nails 3"', sku:'NAL003', cat:'Hardware', unit:'box', icon:'🔨', retail:12000, wholesale:10000, stock:2, reorder:10 },
+  { id:8, name:'PVC Pipe 4"', sku:'PVC004', cat:'Plumbing', unit:'piece', icon:'🔧', retail:18000, wholesale:15500, stock:5, reorder:20 },
+  { id:9, name:'Cement – Tororo 50kg', sku:'CEM002', cat:'Cement', unit:'bag', icon:'🏗', retail:14500, wholesale:13000, stock:340, reorder:50 },
+  { id:10, name:'Roofing Sheets 26G', sku:'ROF026', cat:'Roofing', unit:'sheet', icon:'🏠', retail:62000, wholesale:55000, stock:120, reorder:30 },
+];
+const CUSTOMERS = [
+  { name:'Selekt Contractors Ltd', type:'Contractor', phone:'0772 345678', tin:'1000323004', limit:100000000, outstanding:24500000 },
+  { name:'Build Right Ltd', type:'Contractor', phone:'0761 789012', tin:'1000000000', limit:80000000, outstanding:12750000 },
+  { name:'Mega Developers', type:'Wholesale', phone:'0781 234567', tin:'', limit:60000000, outstanding:8800000 },
+  { name:'Walk-In Customer', type:'Retail', phone:'—', tin:'', limit:0, outstanding:0 },
+  { name:'Sunrise Hardware', type:'Wholesale', phone:'0770 870543', tin:'', limit:0, outstanding:0 },
+  { name:'Ntinda Properties Ltd', type:'Contractor', phone:'0702 456789', tin:'1000400222', limit:150000000, outstanding:55000000 },
+];
+const SALES = [
+  { inv:'INV-2025-0089', date:'22/05/2025', customer:'Selekt Contractors Ltd', items:4, sub:6915000, vat:1244700, total:8159700, pay:'Credit', status:'credit' },
+  { inv:'INV-2025-0088', date:'22/05/2025', customer:'Walk-In Customer', items:2, sub:254237, vat:45763, total:300000, pay:'Cash', status:'paid' },
+  { inv:'INV-2025-0087', date:'21/05/2025', customer:'Build Right Ltd', items:6, sub:1588983, vat:286017, total:1875000, pay:'MTN Money', status:'paid' },
+  { inv:'INV-2025-0086', date:'21/05/2025', customer:'Mega Developers', items:3, sub:745763, vat:134237, total:880000, pay:'Credit', status:'credit' },
+  { inv:'INV-2025-0085', date:'20/05/2025', customer:'Ntinda Properties Ltd', items:8, sub:3559322, vat:640678, total:4200000, pay:'Credit', status:'credit' },
+  { inv:'INV-2025-0084', date:'20/05/2025', customer:'Grace Building Supplies', items:1, sub:122881, vat:22119, total:145000, pay:'Airtel Money', status:'paid' },
+  { inv:'INV-2025-0083', date:'19/05/2025', customer:'Walk-In Customer', items:2, sub:169492, vat:30508, total:200000, pay:'Cash', status:'paid' },
+  { inv:'INV-2025-0082', date:'19/05/2025', customer:'Selekt Contractors Ltd', items:5, sub:2372881, vat:427119, total:2800000, pay:'Credit', status:'credit' },
+];
+const DELIVERIES = [
+  { dn:'DN-2025-0089', date:'22/05/2025', inv:'INV-2025-0089', customer:'Selekt Contractors Ltd', site:'Sky View Apts – Ntinda', driver:'Moses Okello', vehicle:'UAR 123B', status:'pending' },
+  { dn:'DN-2025-0088', date:'21/05/2025', inv:'INV-2025-0087', customer:'Build Right Ltd', site:'Naalya Estate', driver:'Peter Ssempa', vehicle:'UAB 456C', status:'delivered' },
+  { dn:'DN-2025-0087', date:'20/05/2025', inv:'INV-2025-0085', customer:'Ntinda Properties Ltd', site:'Ntinda Heights', driver:'James Okurut', vehicle:'UAK 789D', status:'delivered' },
+  { dn:'DN-2025-0086', date:'19/05/2025', inv:'INV-2025-0082', customer:'Selekt Contractors Ltd', site:'Sky View Apts – Ntinda', driver:'Moses Okello', vehicle:'UAR 123B', status:'delivered' },
+];
+const SUPPLIERS = [
+  { name:'Hima Cement Ltd', cat:'Cement', contact:'David Muwanga', phone:'0414 700200', lead:3, last:'18/05/2025' },
+  { name:'Roofings Ltd', cat:'Steel', contact:'Richard Okello', phone:'0414 250400', lead:5, last:'15/05/2025' },
+  { name:'Tororo Cement', cat:'Cement', contact:'Agnes Auma', phone:'0454 445566', lead:4, last:'10/05/2025' },
+  { name:'Kampala Sand Dealers', cat:'Aggregates', contact:'Hassan Wasswa', phone:'0775 112233', lead:1, last:'20/05/2025' },
+  { name:'Crown Paints Uganda', cat:'Paint', contact:'Sandra Nalwadda', phone:'0414 580000', lead:7, last:'05/05/2025' },
+];
+const USERS = [
+  { name:'John Cashier', username:'john.cashier', role:'Cashier', warehouse:'Nakawa', phone:'0772 111222', last:'22/05/2025 09:14' },
+  { name:'Admin User', username:'admin', role:'Admin', warehouse:'All', phone:'0772 000001', last:'22/05/2025 08:00' },
+  { name:'Jane Manager', username:'jane.mgr', role:'Manager', warehouse:'Nakawa', phone:'0782 334455', last:'21/05/2025 17:30' },
+  { name:'Peter Store', username:'peter.store', role:'Storekeeper', warehouse:'Mpererwe', phone:'0701 667788', last:'20/05/2025 16:00' },
+];
+
+// ===== STATE =====
+let cart = [
+  { ...PRODUCTS[0], qty:20, disc:0, priceType:'retail' },
+  { ...PRODUCTS[1], qty:2.5, disc:5, priceType:'wholesale' },
+  { ...PRODUCTS[2], qty:5, disc:0, priceType:'retail' },
+  { ...PRODUCTS[3], qty:4, disc:0, priceType:'retail' },
+];
+let selectedCustomer = CUSTOMERS[0];
+let selectedPayment = 'cash';
+let invCounter = 90;
+let filteredProds = [...PRODUCTS];
+
+// ===== SIDEBAR =====
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('sidebar-open');
+  document.getElementById('sideOverlay').classList.add('overlay-show');
+  document.body.style.overflow = 'hidden';
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('sidebar-open');
+  document.getElementById('sideOverlay').classList.remove('overlay-show');
+  document.body.style.overflow = '';
+}
+
+// ===== NAVIGATION =====
+const pageMeta = {
+  dashboard:'Dashboard', newsale:'New Sale', sales:'Sales History',
+  deliveries:'Deliveries', products:'Products', inventory:'Inventory Management',
+  customers:'Customers & Contractors', suppliers:'Suppliers',
+  reports:'Reports', users:'User Management', settings:'Settings'
+};
+
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('nav-active'));
+  document.querySelectorAll('.mob-nav-btn').forEach(n => n.classList.remove('mob-nav-active'));
+  document.getElementById('page-'+page).classList.add('active');
+
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(`'${page}'`)) n.classList.add('nav-active');
+  });
+  document.querySelectorAll('.mob-nav-btn').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(`'${page}'`)) n.classList.add('mob-nav-active');
+  });
+
+  document.getElementById('pageTitle').textContent = pageMeta[page] || page;
+  document.getElementById('mainContent').scrollTo(0,0);
+
+  if (page === 'dashboard' && !window._dashReady) { setTimeout(initCharts,150); window._dashReady=true; }
+  if (page === 'reports' && !window._reportReady) { setTimeout(initReportChart,150); window._reportReady=true; }
+}
+
+// ===== PRODUCT SEARCH =====
+function filterProducts(q) {
+  q = q.toLowerCase().trim();
+  filteredProds = q ? PRODUCTS.filter(p => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)) : PRODUCTS;
+  renderProductResults();
+}
+
+function renderProductResults() {
+  const el = document.getElementById('productResults');
+  if (!filteredProds.length) { el.innerHTML='<div class="px-4 py-3 text-xs text-slate-400 text-center">No products found</div>'; return; }
+  el.innerHTML = filteredProds.map(p=>`
+    <div onclick="addToCart(${p.id})" class="flex items-center gap-3 px-3 sm:px-4 py-2.5 hover:bg-orange-50 cursor-pointer border-b border-slate-50 last:border-0 transition-colors active:bg-orange-100">
+      <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-lg flex-shrink-0">${p.icon}</div>
+      <div class="flex-1 min-w-0">
+        <p class="text-xs font-semibold text-slate-800 truncate">${p.name}</p>
+        <p class="text-[10px] text-slate-400 font-mono">${p.sku} · ${p.unit}</p>
+      </div>
+      <div class="text-right flex-shrink-0">
+        <p class="text-xs font-mono font-semibold text-slate-700">${p.retail.toLocaleString()}</p>
+        <p class="text-[10px] font-semibold ${p.stock>p.reorder?'text-green-500':'text-red-500'}">${p.stock>0?'In Stock':'Out'}</p>
+      </div>
+    </div>`).join('');
+}
+
+function handleSearchKey(e) {
+  if (e.key==='Enter' && filteredProds.length) { addToCart(filteredProds[0].id); e.target.value=''; filterProducts(''); }
+}
+
+function addToCart(pid) {
+  const p = PRODUCTS.find(x=>x.id===pid);
+  const ex = cart.find(c=>c.id===pid);
+  if (ex) ex.qty=+(ex.qty+1).toFixed(2); else cart.push({...p,qty:1,disc:0,priceType:'retail'});
+  renderCart();
+  document.getElementById('productSearch').value='';
+  filterProducts('');
+  showToast(`${p.name} added`,'success');
+}
+
+function removeFromCart(i) { cart.splice(i,1); renderCart(); }
+
+function setGlobalPrice(type,btn) {
+  document.querySelectorAll('.ptbtn').forEach(b=>{
+    b.classList.toggle('bg-white',b===btn); b.classList.toggle('text-navy-900',b===btn);
+    b.classList.toggle('text-white/50',b!==btn);
+  });
+  cart.forEach(c=>c.priceType=type); renderCart();
+}
+
+function calcLine(item) {
+  const base=item.priceType==='wholesale'?item.wholesale:item.retail;
+  const gross=base*item.qty;
+  const discAmt=gross*(item.disc/100);
+  const sub=gross-discAmt;
+  const vat=sub*0.18;
+  return{base,sub,vat,total:sub+vat};
+}
+
+function renderCart() {
+  const isMob = window.innerWidth < 768;
+  const tbody = document.getElementById('cartBody');
+  const mobBody = document.getElementById('cartMobileBody');
+
+  const empty = `<tr><td colspan="10" class="text-center py-10 text-slate-400 text-xs">
+    <div class="flex flex-col items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      <span>Cart is empty. Add products above.</span>
+    </div></td></tr>`;
+
+  if (!cart.length) {
+    if(tbody)tbody.innerHTML=empty;
+    if(mobBody)mobBody.innerHTML='<div class="text-center py-10 text-slate-400 text-xs"><div class="flex flex-col items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><span>Cart is empty</span></div></div>';
+    updateTotals(); return;
+  }
+
+  // Desktop table rows
+  if(tbody) tbody.innerHTML = cart.map((item,i)=>{
+    const{base,vat,total}=calcLine(item);
+    return `<tr class="hover:bg-slate-50 transition-colors">
+      <td class="px-3 py-2 text-slate-400 text-xs">${i+1}</td>
+      <td class="px-3 py-2"><p class="text-xs font-semibold text-slate-800">${item.name}</p><p class="text-[10px] text-slate-400 font-mono">SKU: ${item.sku}</p></td>
+      <td class="px-3 py-2 text-xs text-slate-500">${item.unit}</td>
+      <td class="px-3 py-2"><div class="qty-ctrl"><button onclick="cart[${i}].qty=Math.max(.1,+(cart[${i}].qty-1).toFixed(2));renderCart()">−</button><input type="number" value="${item.qty}" min="0.1" step="0.1" onchange="cart[${i}].qty=parseFloat(this.value)||1;renderCart()"><button onclick="cart[${i}].qty=+(cart[${i}].qty+1).toFixed(2);renderCart()">+</button></div></td>
+      <td class="px-3 py-2"><span onclick="cart[${i}].priceType=cart[${i}].priceType==='retail'?'wholesale':'retail';renderCart()" class="badge-${item.priceType} text-[10px] font-bold px-2 py-0.5 rounded-full cursor-pointer">${item.priceType.charAt(0).toUpperCase()+item.priceType.slice(1)}</span></td>
+      <td class="px-3 py-2 text-right font-mono text-xs">${base.toLocaleString()}</td>
+      <td class="px-3 py-2"><input type="number" value="${item.disc}" min="0" max="100" class="w-10 border border-slate-200 rounded text-center text-xs font-mono py-1 focus:border-orange-400" onchange="cart[${i}].disc=parseFloat(this.value)||0;renderCart()"></td>
+      <td class="px-3 py-2 text-right font-mono text-xs text-slate-500">${Math.round(vat).toLocaleString()}</td>
+      <td class="px-3 py-2 text-right font-mono text-xs font-bold text-navy-900">${Math.round(total).toLocaleString()}</td>
+      <td class="px-3 py-2"><button onclick="removeFromCart(${i})" class="w-6 h-6 flex items-center justify-center rounded text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button></td>
+    </tr>`;
+  }).join('');
+
+  // Mobile cards
+  if(mobBody) mobBody.innerHTML = cart.map((item,i)=>{
+    const{base,sub,vat,total}=calcLine(item);
+    return `<div class="mob-card-row px-4 py-3">
+      <div class="flex items-start justify-between gap-2 mb-2">
+        <div class="flex items-center gap-2 flex-1 min-w-0">
+          <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-base flex-shrink-0">${item.icon}</div>
+          <div class="min-w-0"><p class="text-xs font-bold text-slate-800 truncate">${item.name}</p><p class="text-[10px] text-slate-400 font-mono">${item.sku}</p></div>
+        </div>
+        <button onclick="removeFromCart(${i})" class="text-slate-300 hover:text-red-400 p-1 flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+      </div>
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="qty-ctrl"><button onclick="cart[${i}].qty=Math.max(.1,+(cart[${i}].qty-1).toFixed(2));renderCart()">−</button><input type="number" value="${item.qty}" min="0.1" step="0.1" onchange="cart[${i}].qty=parseFloat(this.value)||1;renderCart()"><button onclick="cart[${i}].qty=+(cart[${i}].qty+1).toFixed(2);renderCart()">+</button></div>
+        <span onclick="cart[${i}].priceType=cart[${i}].priceType==='retail'?'wholesale':'retail';renderCart()" class="badge-${item.priceType} text-[10px] font-bold px-2 py-0.5 rounded-full cursor-pointer">${item.priceType.charAt(0).toUpperCase()+item.priceType.slice(1)}</span>
+        <div class="flex items-center gap-1"><label class="text-[10px] text-slate-400">Disc%</label><input type="number" value="${item.disc}" min="0" max="100" class="w-10 border border-slate-200 rounded text-center text-[11px] font-mono py-0.5 focus:border-orange-400" onchange="cart[${i}].disc=parseFloat(this.value)||0;renderCart()"></div>
+        <div class="ml-auto text-right"><p class="text-[10px] text-slate-400">Unit: ${base.toLocaleString()}</p><p class="font-mono font-bold text-sm text-navy-900">${Math.round(total).toLocaleString()}</p></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  updateTotals();
+}
+
+function updateTotals() {
+  let sub=0,vat=0,grand=0;
+  cart.forEach(i=>{const l=calcLine(i);sub+=l.sub;vat+=l.vat;grand+=l.total;});
+  const f=n=>Math.round(n).toLocaleString();
+  document.getElementById('subtotal').textContent=f(sub);
+  document.getElementById('vatTotal').textContent=f(vat);
+  document.getElementById('discTotal').textContent='0';
+  document.getElementById('grandTotal').textContent=f(grand);
+  document.getElementById('cartTotal').textContent='UGX '+f(grand);
+  document.getElementById('totalItems').textContent=cart.length;
+}
+
+// ===== CUSTOMER =====
+function filterCustomers(q) {
+  const c=CUSTOMERS.find(x=>x.name.toLowerCase().includes(q.toLowerCase()));
+  if(c){selectedCustomer=c;showCustomerInfo();}
+}
+function showCustomerInfo() {
+  if(!selectedCustomer)return;
+  document.getElementById('custInfoBox').classList.remove('hidden');
+  document.getElementById('custName').textContent=selectedCustomer.name;
+  document.getElementById('custMeta').textContent=`${selectedCustomer.type} · ${selectedCustomer.phone}`;
+}
+function clearCustomer() {
+  selectedCustomer=null;
+  document.getElementById('custSearch').value='';
+  document.getElementById('custInfoBox').classList.add('hidden');
+}
+
+// ===== PAYMENT =====
+function selectPayment(btn,type) {
+  document.querySelectorAll('.pay-btn').forEach(b=>b.classList.remove('pay-sel'));
+  btn.classList.add('pay-sel');
+  selectedPayment=type;
+}
+
+// ===== COMPLETE SALE =====
+function completeSale() {
+  if(!cart.length){showToast('Cart is empty — add products first','error');return;}
+  let grand=0; cart.forEach(i=>grand+=calcLine(i).total);
+  const inv=`INV-2025-0${invCounter++}`;
+  document.getElementById('receiptInvoice').textContent=`Invoice: ${inv}`;
+  document.getElementById('rcptCust').textContent=selectedCustomer?selectedCustomer.name:'Walk-In Customer';
+  document.getElementById('rcptItems').textContent=cart.length+' items';
+  document.getElementById('rcptPayment').textContent={cash:'Cash',mtn:'MTN Mobile Money',airtel:'Airtel Money',credit:'Credit'}[selectedPayment];
+  document.getElementById('rcptTotal').textContent='UGX '+Math.round(grand).toLocaleString();
+  openModal('receiptModal');
+}
+function clearSale() { cart=[]; selectedCustomer=null; document.getElementById('custSearch').value=''; document.getElementById('custInfoBox').classList.add('hidden'); renderCart(); }
+
+// ===== OFFLINE =====
+let isOnline=true;
+function toggleOffline() {
+  isOnline=!isOnline;
+  const btn=document.getElementById('offlineBtn');
+  const dot=document.querySelector('.pulse');
+  const txt=document.getElementById('statusText');
+  if(isOnline){btn.className='flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full bg-amber-400 text-white text-[11px] sm:text-xs font-semibold flex-shrink-0';dot.style.background='#4ade80';txt.textContent='Online';showToast('Switched to Online Mode','success');}
+  else{btn.className='flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full bg-red-500 text-white text-[11px] sm:text-xs font-semibold flex-shrink-0';dot.style.background='#f87171';txt.textContent='Offline';showToast('Working Offline – syncs when back online','error');}
+}
+
+// ===== MODAL =====
+function openModal(id){document.getElementById(id).classList.remove('hidden');}
+function closeModal(id){document.getElementById(id).classList.add('hidden');}
+
+// ===== TOAST =====
+function showToast(msg,type='info') {
+  const bg={success:'bg-green-50 border-green-400 text-green-800',error:'bg-red-50 border-red-400 text-red-800',info:'bg-blue-50 border-blue-400 text-blue-800'}[type];
+  const ic={success:'✓',error:'✕',info:'i'}[type];
+  const t=document.createElement('div');
+  t.className=`t-in flex items-center gap-2.5 px-4 py-3 rounded-xl border shadow-lg text-sm font-medium min-w-48 max-w-xs ${bg}`;
+  t.innerHTML=`<span class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${type==='success'?'bg-green-400 text-white':type==='error'?'bg-red-400 text-white':'bg-blue-400 text-white'}">${ic}</span>${msg}`;
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(()=>{t.classList.replace('t-in','t-out');setTimeout(()=>t.remove(),300);},3000);
+}
+
+// ===== RENDER TABLES =====
+const stCls={paid:'bg-green-50 text-green-700',credit:'bg-blue-50 text-blue-700',pending:'bg-amber-50 text-amber-700',delivered:'bg-green-50 text-green-700'};
+
+function renderSales() {
+  const d=document.getElementById('salesTableBody');
+  const m=document.getElementById('salesMobileBody');
+  if(d) d.innerHTML=SALES.map(s=>`<tr class="hover:bg-slate-50 transition-colors">
+    <td class="px-4 py-3 font-mono text-xs text-blue-600 font-semibold">${s.inv}</td>
+    <td class="px-4 py-3 text-xs">${s.date}</td>
+    <td class="px-4 py-3 text-xs font-semibold text-slate-800">${s.customer}</td>
+    <td class="px-4 py-3 text-xs text-right font-mono font-bold text-navy-900">${s.total.toLocaleString()}</td>
+    <td class="px-4 py-3 text-xs">${s.pay}</td>
+    <td class="px-4 py-3"><span class="text-[10px] font-bold px-2.5 py-1 rounded-full ${stCls[s.status]||'bg-slate-100 text-slate-600'}">${s.status.charAt(0).toUpperCase()+s.status.slice(1)}</span></td>
+    <td class="px-4 py-3 flex gap-1"><button class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors text-sm" onclick="showToast('Opening invoice...','info')">👁</button><button class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-500 transition-colors text-sm" onclick="showToast('Printing...','info')">🖨</button></td>
+  </tr>`).join('');
+  if(m) m.innerHTML=SALES.map(s=>`<div class="mob-card-row px-4 py-3">
+    <div class="flex items-start justify-between mb-1.5">
+      <div><p class="text-xs font-bold text-navy-900">${s.customer}</p><p class="text-[10px] text-slate-400 font-mono">${s.inv} · ${s.date}</p></div>
+      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${stCls[s.status]||'bg-slate-100 text-slate-600'}">${s.status.charAt(0).toUpperCase()+s.status.slice(1)}</span>
+    </div>
+    <div class="flex items-center justify-between">
+      <div class="flex gap-2 text-[11px] text-slate-500"><span>${s.items} items</span><span>·</span><span>${s.pay}</span></div>
+      <p class="font-mono font-bold text-sm text-navy-900">${s.total.toLocaleString()}</p>
+    </div>
+  </div>`).join('');
+}
+
+function renderDeliveries() {
+  const d=document.getElementById('deliveriesTableBody');
+  const m=document.getElementById('deliveriesMobileBody');
+  if(d) d.innerHTML=DELIVERIES.map(x=>`<tr class="hover:bg-slate-50 transition-colors">
+    <td class="px-4 py-3 font-mono text-xs text-blue-600 font-semibold">${x.dn}</td>
+    <td class="px-4 py-3 text-xs">${x.date}</td>
+    <td class="px-4 py-3 text-xs font-semibold">${x.customer}</td>
+    <td class="px-4 py-3 text-xs text-slate-500">${x.site}</td>
+    <td class="px-4 py-3 text-xs">${x.driver}</td>
+    <td class="px-4 py-3 text-xs font-mono">${x.vehicle}</td>
+    <td class="px-4 py-3"><span class="text-[10px] font-bold px-2.5 py-1 rounded-full ${x.status==='delivered'?'bg-green-50 text-green-700':'bg-amber-50 text-amber-700'}">${x.status.charAt(0).toUpperCase()+x.status.slice(1)}</span></td>
+    <td class="px-4 py-3 flex gap-1"><button class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-500" onclick="showToast('Printing DN...','info')">🖨</button></td>
+  </tr>`).join('');
+  if(m) m.innerHTML=DELIVERIES.map(x=>`<div class="mob-card-row px-4 py-3">
+    <div class="flex items-start justify-between mb-1.5">
+      <div><p class="text-xs font-bold text-slate-800">${x.customer}</p><p class="text-[10px] font-mono text-slate-400">${x.dn} · ${x.date}</p></div>
+      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${x.status==='delivered'?'bg-green-50 text-green-700':'bg-amber-50 text-amber-700'}">${x.status.charAt(0).toUpperCase()+x.status.slice(1)}</span>
+    </div>
+    <div class="flex gap-2 text-[11px] text-slate-500"><span>${x.site}</span><span>·</span><span>${x.driver}</span><span>·</span><span class="font-mono">${x.vehicle}</span></div>
+  </div>`).join('');
+}
+
+function renderProducts() {
+  const d=document.getElementById('productsTableBody');
+  const m=document.getElementById('productsMobileBody');
+  if(d) d.innerHTML=PRODUCTS.map(p=>`<tr class="hover:bg-slate-50 transition-colors">
+    <td class="px-4 py-3 text-xl">${p.icon}</td>
+    <td class="px-4 py-3 text-xs font-semibold text-slate-800">${p.name}</td>
+    <td class="px-4 py-3 font-mono text-xs text-slate-500">${p.sku}</td>
+    <td class="px-4 py-3 text-xs">${p.cat}</td>
+    <td class="px-4 py-3 text-right font-mono text-xs font-semibold">${p.retail.toLocaleString()}</td>
+    <td class="px-4 py-3 text-right font-mono text-xs">${p.wholesale.toLocaleString()}</td>
+    <td class="px-4 py-3 text-right font-mono text-xs font-semibold ${p.stock<=p.reorder?'text-red-500':'text-slate-700'}">${p.stock} ${p.unit}s</td>
+    <td class="px-4 py-3"><span class="text-[10px] font-bold px-2.5 py-1 rounded-full ${p.stock<=p.reorder?'bg-red-50 text-red-600':'bg-green-50 text-green-700'}">${p.stock<=p.reorder?'Low Stock':'In Stock'}</span></td>
+    <td class="px-4 py-3 flex gap-1"><button onclick="openModal('productModal')" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-500 text-sm">✏</button><button onclick="showToast('Deleted','error')" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 text-sm">🗑</button></td>
+  </tr>`).join('');
+  if(m) m.innerHTML=PRODUCTS.map(p=>`<div class="mob-card-row px-4 py-3 flex items-center gap-3">
+    <div class="text-2xl">${p.icon}</div>
+    <div class="flex-1 min-w-0">
+      <p class="text-xs font-bold text-slate-800 truncate">${p.name}</p>
+      <p class="text-[10px] font-mono text-slate-400">${p.sku} · ${p.cat}</p>
+      <div class="flex gap-3 mt-1 text-[11px]"><span class="text-slate-600 font-mono">${p.retail.toLocaleString()}</span><span class="font-semibold ${p.stock<=p.reorder?'text-red-500':'text-green-500'}">${p.stock} ${p.unit}s</span></div>
+    </div>
+    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${p.stock<=p.reorder?'bg-red-50 text-red-600':'bg-green-50 text-green-700'} flex-shrink-0">${p.stock<=p.reorder?'Low':'OK'}</span>
+  </div>`).join('');
+}
+
+function renderInventory() {
+  document.getElementById('inventoryGrid').innerHTML=PRODUCTS.map(p=>{
+    const pct=Math.min(100,Math.round(p.stock/(p.reorder*4)*100));
+    const bc=pct<25?'bg-red-400':pct<50?'bg-amber-400':'bg-green-400';
+    return `<div class="bg-white rounded-xl shadow-sm overflow-hidden hov-card">
+      <div class="h-20 bg-slate-50 flex items-center justify-center text-3xl border-b border-slate-100">${p.icon}</div>
+      <div class="p-3">
+        <p class="font-semibold text-xs text-navy-900 leading-tight mb-0.5 truncate">${p.name}</p>
+        <p class="font-mono text-[9px] text-slate-400 mb-2">${p.sku}</p>
+        <div class="space-y-1 mb-2">
+          <div class="flex justify-between text-[10px]"><span class="text-slate-400">Stock</span><span class="font-mono font-semibold ${p.stock<=p.reorder?'text-red-500':'text-slate-700'}">${p.stock} ${p.unit}s</span></div>
+          <div class="flex justify-between text-[10px]"><span class="text-slate-400">Retail</span><span class="font-mono font-semibold">${p.retail.toLocaleString()}</span></div>
+        </div>
+        <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden mb-2"><div class="h-full rounded-full ${bc}" style="width:${pct}%"></div></div>
+        <button onclick="openModal('stockModal')" class="w-full bg-navy-900 hover:bg-navy-700 text-white text-[10px] font-bold py-1.5 rounded-lg transition-colors">+ Stock In</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderCustomers() {
+  const d=document.getElementById('customersTableBody');
+  const m=document.getElementById('customersMobileBody');
+  if(d) d.innerHTML=CUSTOMERS.map(c=>{
+    const avail=c.limit-c.outstanding;
+    return `<tr class="hover:bg-slate-50 transition-colors">
+      <td class="px-4 py-3 text-xs font-semibold">${c.name}</td>
+      <td class="px-4 py-3 text-xs">${c.type}</td>
+      <td class="px-4 py-3 text-xs font-mono">${c.phone}</td>
+      <td class="px-4 py-3 text-right font-mono text-xs">${c.limit?c.limit.toLocaleString():'—'}</td>
+      <td class="px-4 py-3 text-right font-mono text-xs ${c.outstanding>0?'text-red-500 font-bold':''}">${c.outstanding?c.outstanding.toLocaleString():'—'}</td>
+      <td class="px-4 py-3 text-right font-mono text-xs text-green-600">${avail>0?avail.toLocaleString():'—'}</td>
+      <td class="px-4 py-3"><span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-green-50 text-green-700">Active</span></td>
+      <td class="px-4 py-3"><button onclick="openModal('customerModal')" class="text-blue-500 hover:text-blue-700 text-sm">✏</button></td>
+    </tr>`;
+  }).join('');
+  if(m) m.innerHTML=CUSTOMERS.map(c=>{ const av=c.limit-c.outstanding; return `<div class="mob-card-row px-4 py-3">
+    <div class="flex items-start justify-between mb-1.5"><div><p class="text-xs font-bold text-slate-800">${c.name}</p><p class="text-[10px] text-slate-400">${c.type} · ${c.phone}</p></div><span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700">Active</span></div>
+    ${c.limit?`<div class="flex gap-4 text-[11px]"><span class="text-slate-500">Limit: <span class="font-mono text-slate-700">${c.limit.toLocaleString()}</span></span>${c.outstanding?`<span class="text-slate-500">Owed: <span class="font-mono text-red-500">${c.outstanding.toLocaleString()}</span></span>`:''}</div>`:''}
+  </div>`; }).join('');
+}
+
+function renderSuppliers() {
+  const d=document.getElementById('suppliersTableBody');
+  const m=document.getElementById('suppliersMobileBody');
+  if(d) d.innerHTML=SUPPLIERS.map(s=>`<tr class="hover:bg-slate-50 transition-colors">
+    <td class="px-4 py-3 text-xs font-semibold">${s.name}</td>
+    <td class="px-4 py-3 text-xs">${s.cat}</td>
+    <td class="px-4 py-3 text-xs">${s.contact}</td>
+    <td class="px-4 py-3 text-xs font-mono">${s.phone}</td>
+    <td class="px-4 py-3 text-center text-xs">${s.lead}d</td>
+    <td class="px-4 py-3 text-xs">${s.last}</td>
+    <td class="px-4 py-3"><span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-green-50 text-green-700">Active</span></td>
+    <td class="px-4 py-3"><button onclick="openModal('supplierModal')" class="text-blue-500 text-sm">✏</button></td>
+  </tr>`).join('');
+  if(m) m.innerHTML=SUPPLIERS.map(s=>`<div class="mob-card-row px-4 py-3">
+    <div class="flex items-start justify-between mb-1"><div><p class="text-xs font-bold text-slate-800">${s.name}</p><p class="text-[10px] text-slate-400">${s.cat} · ${s.contact}</p></div><span class="text-[10px] bg-green-50 text-green-700 font-bold px-2 py-0.5 rounded-full">Active</span></div>
+    <div class="flex gap-3 text-[11px] text-slate-500"><span class="font-mono">${s.phone}</span><span>Lead: ${s.lead}d</span><span>${s.last}</span></div>
+  </div>`).join('');
+}
+
+function renderUsers() {
+  const roleCls={Admin:'bg-purple-50 text-purple-700',Manager:'bg-blue-50 text-blue-700',Cashier:'bg-green-50 text-green-700',Storekeeper:'bg-amber-50 text-amber-700'};
+  const d=document.getElementById('usersTableBody');
+  const m=document.getElementById('usersMobileBody');
+  if(d) d.innerHTML=USERS.map(u=>`<tr class="hover:bg-slate-50 transition-colors">
+    <td class="px-4 py-3 text-xs font-semibold">${u.name}</td>
+    <td class="px-4 py-3 text-xs font-mono text-slate-500">${u.username}</td>
+    <td class="px-4 py-3"><span class="text-[10px] font-bold px-2.5 py-1 rounded-full ${roleCls[u.role]}">${u.role}</span></td>
+    <td class="px-4 py-3 text-xs">${u.warehouse}</td>
+    <td class="px-4 py-3 text-xs text-slate-500">${u.last}</td>
+    <td class="px-4 py-3"><span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-green-50 text-green-700">Active</span></td>
+    <td class="px-4 py-3"><button onclick="openModal('userModal')" class="text-blue-500 text-sm">✏</button></td>
+  </tr>`).join('');
+  if(m) m.innerHTML=USERS.map(u=>`<div class="mob-card-row px-4 py-3">
+    <div class="flex items-start justify-between mb-1"><div><p class="text-xs font-bold text-slate-800">${u.name}</p><p class="text-[10px] font-mono text-slate-400">${u.username}</p></div><span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${roleCls[u.role]}">${u.role}</span></div>
+    <div class="flex gap-3 text-[11px] text-slate-500"><span>${u.warehouse}</span><span>·</span><span>${u.last}</span></div>
+  </div>`).join('');
+}
+
+function renderReportTable() {
+  const d=document.getElementById('reportTableBody');
+  const m=document.getElementById('reportMobileBody');
+  if(d) d.innerHTML=SALES.slice(0,6).map(s=>`<tr class="hover:bg-slate-50 transition-colors">
+    <td class="px-4 py-3 text-xs">${s.date}</td>
+    <td class="px-4 py-3 font-mono text-xs text-blue-600 font-semibold">${s.inv}</td>
+    <td class="px-4 py-3 text-xs font-semibold">${s.customer}</td>
+    <td class="px-4 py-3 text-right font-mono text-xs">${s.sub.toLocaleString()}</td>
+    <td class="px-4 py-3 text-right font-mono text-xs">${s.vat.toLocaleString()}</td>
+    <td class="px-4 py-3 text-right font-mono text-xs font-bold text-navy-900">${s.total.toLocaleString()}</td>
+    <td class="px-4 py-3 text-xs">${s.pay}</td>
+  </tr>`).join('');
+  if(m) m.innerHTML=SALES.slice(0,6).map(s=>`<div class="mob-card-row px-4 py-3">
+    <div class="flex justify-between mb-1"><div><p class="text-xs font-bold text-slate-800">${s.customer}</p><p class="text-[10px] font-mono text-slate-400">${s.inv} · ${s.date}</p></div><p class="font-mono font-bold text-sm text-navy-900">${s.total.toLocaleString()}</p></div>
+    <div class="flex justify-between text-[11px] text-slate-500"><span>${s.pay}</span><span>VAT: ${s.vat.toLocaleString()}</span></div>
+  </div>`).join('');
+}
+
+// ===== APEX CHARTS =====
+function initCharts() {
+  new ApexCharts(document.getElementById('weekChart'),{
+    chart:{type:'bar',height:140,toolbar:{show:false}},
+    series:[{name:'Sales (UGX)',data:[4500000,7200000,4800000,9100000,8159700,6000000,3200000]}],
+    xaxis:{categories:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],labels:{style:{fontSize:'10px',fontFamily:'Barlow',colors:'#94a3b8'}},axisBorder:{show:false},axisTicks:{show:false}},
+    yaxis:{labels:{formatter:v=>(v/1e6).toFixed(1)+'M',style:{fontSize:'9px',fontFamily:'JetBrains Mono',colors:'#94a3b8'}}},
+    colors:['#f47b20'],
+    plotOptions:{bar:{borderRadius:5,columnWidth:'55%'}},
+    dataLabels:{enabled:false},
+    grid:{borderColor:'#f1f5f9',strokeDashArray:4},
+    tooltip:{y:{formatter:v=>'UGX '+v.toLocaleString()},theme:'light'},
+    responsive:[{breakpoint:480,options:{chart:{height:120},xaxis:{labels:{style:{fontSize:'9px'}}}}}]
+  }).render();
+
+  new ApexCharts(document.getElementById('categoryChart'),{
+    chart:{type:'donut',height:180,toolbar:{show:false}},
+    series:[35,20,12,9,24],
+    labels:['Cement','Steel','Sand','Aggregates','Others'],
+    colors:['#f47b20','#3b82f6','#22c55e','#8b5cf6','#e2e8f0'],
+    plotOptions:{pie:{donut:{size:'65%',labels:{show:true,value:{show:true,formatter:v=>v+'%',fontSize:'16px',fontFamily:'Barlow Condensed',fontWeight:800,color:'#0f1729'}}}}},
+    dataLabels:{enabled:false},
+    legend:{position:'bottom',fontSize:'10px',fontFamily:'Barlow',fontWeight:600,markers:{size:5}},
+    tooltip:{y:{formatter:v=>v+'%'}}
+  }).render();
+}
+
+function initReportChart() {
+  new ApexCharts(document.getElementById('reportChart'),{
+    chart:{type:'area',height:160,toolbar:{show:false}},
+    series:[{name:'Revenue',data:[6200000,4500000,8800000,5500000,9500000,7000000,5200000,6500000,8800000,4200000,7500000,9200000]}],
+    xaxis:{categories:['May 1','3','5','7','9','11','13','15','17','19','21','23'],labels:{style:{fontSize:'9px',fontFamily:'Barlow',colors:'#94a3b8'}},axisBorder:{show:false},axisTicks:{show:false}},
+    yaxis:{labels:{formatter:v=>(v/1e6).toFixed(1)+'M',style:{fontSize:'9px',fontFamily:'JetBrains Mono',colors:'#94a3b8'}}},
+    colors:['#f47b20'],
+    fill:{type:'gradient',gradient:{shadeIntensity:1,opacityFrom:0.4,opacityTo:0.05,stops:[0,90,100]}},
+    stroke:{curve:'smooth',width:2},
+    dataLabels:{enabled:false},
+    grid:{borderColor:'#f1f5f9',strokeDashArray:4},
+    tooltip:{y:{formatter:v=>'UGX '+v.toLocaleString()},theme:'light'}
+  }).render();
+}
+
+// ===== KEYBOARD =====
+document.addEventListener('keydown',e=>{
+  if(e.key==='F2'){e.preventDefault();navigate('newsale');setTimeout(()=>document.getElementById('productSearch').focus(),100);}
+  if(e.key==='Escape'){document.querySelectorAll('[id$="Modal"]:not(.hidden)').forEach(m=>m.classList.add('hidden'));closeSidebar();}
+});
+
+// ===== INIT =====
+function init() {
+  document.getElementById('currentDate').textContent=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  renderProductResults();
+  renderCart();
+  showCustomerInfo();
+  renderSales(); renderDeliveries(); renderProducts(); renderInventory();
+  renderCustomers(); renderSuppliers(); renderUsers(); renderReportTable();
+  navigate('newsale');
+}
+
+window.addEventListener('load', init);
+
+// Re-render cart on resize to switch between mobile/desktop view
+let resizeTimer;
+window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(renderCart,200);});
+</script>
+</body>
+</html>
